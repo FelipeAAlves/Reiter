@@ -1,0 +1,6 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k}{type}\PYG{n+nc}{ DualNumber}\PYG{p}{\PYGZob{}}\PYG{n}{N}\PYG{p}{,} \PYG{n}{T}\PYG{o}{\PYGZlt{}:}\PYG{n}{Real}\PYG{p}{\PYGZcb{}} \PYG{o}{\PYGZlt{}:} \PYG{n}{Real}
+   \PYG{n}{value}\PYG{p}{::}\PYG{n}{T}
+   \PYG{n}{partials}\PYG{p}{::}\PYG{n}{Partials}\PYG{p}{\PYGZob{}}\PYG{n}{N}\PYG{p}{,}\PYG{n}{t}\PYG{p}{\PYGZcb{}}
+\PYG{k}{end}
+\end{Verbatim}

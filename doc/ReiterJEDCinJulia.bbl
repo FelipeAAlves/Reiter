@@ -1,0 +1,30 @@
+\begin{thebibliography}{3}
+\providecommand{\natexlab}[1]{#1}
+\providecommand{\url}[1]{\texttt{#1}}
+\expandafter\ifx\csname urlstyle\endcsname\relax
+  \providecommand{\doi}[1]{doi: #1}\else
+  \providecommand{\doi}{doi: \begingroup \urlstyle{rm}\Url}\fi
+
+\bibitem[Algan et~al.(2008)Yann Algan, Olivier Allais, and Wouter~J.
+  Den~Haan]{algan}
+Yann Algan, Olivier Allais, and Wouter~J. Den~Haan.
+\newblock {Solving heterogeneous-agent models with parameterized
+  cross-sectional distributions}.
+\newblock \emph{Journal of Economic Dynamics and Control}, 32\penalty0
+  (3):\penalty0 875--908, March 2008.
+\newblock URL
+  \url{https://ideas.repec.org/a/eee/dyncon/v32y2008i3p875-908.html}.
+
+\bibitem[Reiter(2009)Michael Reiter]{reiter}
+Michael Reiter.
+\newblock {Solving heterogeneous-agent models by projection and perturbation}.
+\newblock \emph{Journal of Economic Dynamics and Control}, 33\penalty0
+  (3):\penalty0 649--665, March 2009.
+
+\bibitem[Winberry(2016)Thomas Winberry]{winberry}
+Thomas Winberry.
+\newblock A toolbox for solving and estimating heterogeneous agent macro
+  models.
+\newblock 2016.
+
+\end{thebibliography}

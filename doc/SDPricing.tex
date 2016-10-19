@@ -1,0 +1,150 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Draft
+% 
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\documentclass[a4paper,10pt]{article}  %scrartcl
+
+\input{C:/Users/falves/Dropbox/TexFolder/preamble.tex} 
+
+\title{ Example State-Dependent Pricing \vspace{-5em}} % use 5
+% {
+%         \vspace{-0in}  
+%         \usefont{OT1}{bch}{b}{n}
+%         \normalfont \normalsize \ \[5pt]
+%         \horrule{0.5pt} \[0.0cm]
+%         \huge Referee report on ``Learning, Confidence, and Business Cycles''  \[-0.5cm]
+%         \horrule{2pt} \[-0.5cm]
+% }
+% \author{
+%         \normalfont \normalsize Felipe Alves \\[-3pt]       \normalsize
+%         \today
+% }
+\date{ \vspace{-0em} }
+
+% *************************************************************************************************************
+% ************************************************                ********************************************* 
+% *************************************************************************************************************
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+
+\end{abstract}
+
+%**************************************************************************************************************************
+%%%%%%% INTODUCTION
+%--------------------------------------------------------------------------------------------------------------------------
+\section{Intoduction} % (fold)
+\label{sec:intoduction}
+%%%
+\begin{itemize}
+   
+   %%
+   \item Some comment
+
+\end{itemize}
+%%%
+% SECTION INTODUCTION (END)
+%..........................................................................................................................
+%**************************************************************************************************************
+%%%%%%% MODEL
+%--------------------------------------------------------------------------------------------------------------
+\section{Model} % (fold)
+\label{sec:model}
+%%%
+\begin{itemize}
+   %% 
+   \item Production function
+   %%%
+   \begin{equation}
+      \label{eq:model_eq1}
+      y_t(h) = Z_t a_t(h) \ell_t(h)
+   \end{equation}
+   %%%
+
+   %% 
+   \item Profits
+   
+   %% 
+   \item Each firm chooses prices $ \{\} $ in order to maximize its market value
+   %%%
+   \begin{equation}
+      \label{eq:model_eq}
+      \mathbb{E}_t \sum_{\tau=0}^{\infty} D_{t,t+\tau} \Pi_{t+\tau} (h)
+   \end{equation}
+   %%%
+   where nominal profits in period $ t $ are given by
+   %%%
+   \begin{equation}
+      \label{eq:model_eq3}
+      \Pi_t(h) = p_t(h) y_t(h) - W_t \ell_t(h) - \kappa_t(h) \mathbbm{1}\{p_t(h) \ne p_{t-1}(h)\}
+   \end{equation}
+   %%%
+   %%
+   \item Value function for the firm
+   \[
+      V_t \left( a_t(h), \frac{ p_{t-1}(h) }{ P_t }; \ \cdot \ \right) = 
+      \max_{p} 
+      \bigg\{
+         \Pi^R \left( a_t(h), \frac{ p_{t-1}(h) }{ P_t }, \cdot \right) + 
+         \mathbb{E}_t \bigg[ D^R_{t,t+1} V_t \left( a_{t+1}(h), \frac{ p }{ P_{t+1} }, \cdot \right) \bigg]
+      \bigg\}
+   \]
+
+   %% 
+   \item 
+   \[
+      v(a, p/P; \ \cdot \ ) = \int_{\xi} \max \Big\{ V^A(  ) - \xi , V^N( )  \Big\}
+   \]
+   where
+   %%%
+   \begin{equation}
+      \label{eq:model_eq4}
+      %%%
+      \begin{split}
+      V^A(a, \tilde{p}_{-11}, \ \cdot \ ) & = \max_{\tilde{p}} 
+         \bigg\{ 
+            \Pi^R \left( a, \tilde{p}, \cdot \right) + 
+            \mathbb{E} \bigg[  \bigg]
+         \bigg\} \\
+      %%
+      V^N(a, \tilde{p}_{-1}, \ \cdot \ ) & = 
+          \Pi^R \left( a, \tilde{p}_{-1}, \cdot \right) + 
+      \end{split}
+   \end{equation}
+   %%%
+   The firm will choose to pay the fixed cost iff $ V^A -\xi \ge V^N $. Hence,
+   there is a unique threshold which makes the firm indifferent between these
+   two options
+   \[
+      \tilde{\xi} = V^A( ) - V^N( )
+   \]
+
+   %% 
+   \item The firm value function V , adjusted by the marginal utility of the representative households, is therefore given by
+\end{itemize}
+%%%
+
+
+% SECTION MODEL (END)
+%..............................................................................................................
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% End document
+
+
+% ============================================================================================================
+%------------------------------------------------ REFERENCE ------------------------------------------------
+% ============================================================================================================
+\clearpage
+\newpage
+%%%%% MAC
+% \bibliographystyle{/Users/Felipe/Dropbox/TexFolder/plainnat2}
+% \bibliography{/Users/Felipe/Dropbox/TexFolder/sample2}
+%%%%% PC
+\bibliographystyle{C:/Users/falves/Dropbox/TexFolder/plainnat2}
+% \bibliography{C:/Users/falves/Dropbox/TexFolder/}
+
+\end{document}  

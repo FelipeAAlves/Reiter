@@ -1,0 +1,35 @@
+This is version 0.10 of the library appraggr.tar.gz
+It contains Matlab files for the paper
+"Approximate and Almost-Exact Aggregation in Dynamic Stochastic Heterogeneous-Agent Models"
+Michael Reiter, IHS, December 2009
+Feel free to use, copy and modify at your own risk;
+   this program comes with NO WARRANTY WHATSOEVER
+
+
+
+INSTALLATION
+
+1) Install the CompEcon toolbox of Miranda Fackler
+(http://www4.ncsu.edu/~pfackler/compecon/toolbox.html)
+
+2) Unpack appraggr.tar.gz in a separate directory, for example
+c:/matlab/appraggr
+
+Check whether the paths set in setpaths.m are correct
+(if your install directory is not c:/matlab/appraggr,
+you have to change that; also look for the directory
+where the Miranda/Fackler toolbox was installed)
+
+
+SOLVING THE GROWTH MODEL
+
+1) Change into the "growth" subdirectory
+
+2) To solve with almost-exact aggregation,
+and do the accuracy checks, 
+run the script "solvegrowth.m"
+
+3) Solving with the Krusell/Smith algorithm is coming soon!
+(version 0.20 of )
+
+4) Model reduction in state space form is coming soon!

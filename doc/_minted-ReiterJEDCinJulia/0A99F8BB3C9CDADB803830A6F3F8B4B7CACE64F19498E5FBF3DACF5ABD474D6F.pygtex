@@ -1,0 +1,5 @@
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{k}{type}\PYG{n+nc}{ Partials}\PYG{p}{\PYGZob{}}\PYG{n}{N}\PYG{p}{,}\PYG{n}{T}\PYG{p}{\PYGZcb{}}
+   \PYG{n}{values}\PYG{p}{::}\PYG{n}{NTuple}\PYG{p}{\PYGZob{}}\PYG{n}{N}\PYG{p}{,}\PYG{n}{T}\PYG{p}{\PYGZcb{}}
+\PYG{k}{end}
+\end{Verbatim}
