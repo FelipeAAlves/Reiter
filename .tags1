@@ -4,3 +4,10 @@
 !_TAG_PROGRAM_NAME	Exuberant Ctags	//
 !_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
 !_TAG_PROGRAM_VERSION	5.8	//
+bellman_rhs!	C:\Users\falves\Git\Reiter\src\SDPricing\solve_col.jl	/^function bellman_rhs!(V::Array{Float64,2}, coeff::Array{Float64,2}, w::Float64, Y::Float64, fp::FirmProblem)$/;"	function	line:84
+f!	C:\Users\falves\Git\Reiter\src\SDPricing\solve_col.jl	/^    f!(p̃, resid) = foc_price_adjust(resid, p̃, z_vals, w, Y, cv, fp, p̃_basis, Φ_z, ind_z_x_z)$/;"	function	line:106
+foc_price_adjust	C:\Users\falves\Git\Reiter\src\SDPricing\solve_col.jl	/^function foc_price_adjust{T<:Real}(resid::Vector{T}, p̃::Vector{T}, z_vals, w, Y, cv, fp, p̃_basis, Φ_z, ind_z_x_z)$/;"	function	line:112
+foc_price_adjust	C:\Users\falves\Git\Reiter\src\SDPricing\solve_col.jl	/^function foc_price_adjust(p̃, z_vals, w, Y, cv, fp, p̃_basis, Φ_z, ind_z_x_z)$/;"	function	line:130
+value_adjust!	C:\Users\falves\Git\Reiter\src\SDPricing\solve_col.jl	/^function value_adjust!(V::Array{Float64,2}, p̃::Vector{Float64}, z_vals, w, Y, cv, fp, p̃_basis, Φ_z, ind_z_x_z, ind_z_x_p̃)$/;"	function	line:144
+value_nadjust!	C:\Users\falves\Git\Reiter\src\SDPricing\solve_col.jl	/^function value_nadjust!(V, grid_nodes, w, Y, cv, Π_z, Φ)$/;"	function	line:158
+profit	C:\Users\falves\Git\Reiter\src\SDPricing\solve_col.jl	/^function profit(z_vals, p̃, w, Y, fp)$/;"	function	line:174
