@@ -114,7 +114,7 @@ function bellman_rhs!(V::Array{Float64,2}, coeff::Array{Float64,2}, w::Float64, 
     #== FIND optimal p̃ in case of adjustment ==#
     f!(p̃, resid) = foc_price_adjust(resid, p̃, z_vals, w, Y, cv, fp, p̃_basis, Φ_z, ind_z_x_z)
     g!(p̃, J)     = soc_price_adjust(resid, p̃, z_vals, w, Y, cv, fp, p̃_basis, Φ_z, ind_z_x_z)
-    @time res = nlsolve(f!, g!, ones(n_z), autodiff = true)
+    @time res = nlsolve(f!, g!, ones(n_z))
     p̃star = res.zero
 
     #== Value function ==#
@@ -140,27 +140,27 @@ function foc_price_adjust{T<:Real}(resid::Vector{T}, p̃::Vector{T}, z_vals, w, 
 
     return Void
 end
-
-function soc_price_adjust{T<:Real}(J::Matrix{T}, p̃::Vector{T}, z_vals, w, Y, cv, fp, p̃_basis, Φ_z, ind_z_x_z)
+function soc_price_adjust!{T<:Real}(J::Matrix{T}, p̃::Vector{T}, z_vals, w, Y, cv, fp, p̃_basis, Φ_z, ind_z_x_z)
 
     n_z = length(z_vals)
     # .....................................................................................
 
-    Φ_p̃_deriv  = BasisStructure( p̃_basis, Direct(), exp(p̃), 1).vals[1]
-    Φ_p̃_deriv2 = BasisStructure( p̃_basis, Direct(), exp(p̃), 2).vals[1]
+    Φ_p̃_deriv = BasisStructure( p̃_basis, Direct(), exp(p̃), 1).vals[1]
     Φ = row_kron( Φ_p̃_deriv[ ind_z_x_z[:,2], :], Φ_z[ ind_z_x_z[:,1], :] )
     ∂v̂ = Φ * cv
+    # .....................................................................................
+    Φ_p̃_deriv2 = BasisStructure( p̃_basis, Direct(), exp(p̃), 2).vals[1]
+    Φ = row_kron( Φ_p̃_deriv[ ind_z_x_z[:,2], :], Φ_z[ ind_z_x_z[:,1], :] )
+    ∂²v̂ = Φ * cv
 
-    Φ = row_kron( Φ_p̃_deriv2[ ind_z_x_z[:,2], :], Φ_z[ ind_z_x_z[:,1], :] )
-    ∂v̂² = Φ * cv
+    E∂v̂ = row_kron( eye(n_z) , fp.Π_z ) * ∂v̂
+    E∂²v̂ = row_kron( eye(n_z) , fp.Π_z ) * ∂²v̂
+    # .....................................................................................
 
-    E∂v̂  = row_kron( eye(n_z) , fp.Π_z ) * ∂v̂
-    E∂v̂² = row_kron( eye(n_z) , fp.Π_z ) * ∂v̂²
-
+    fill!(J,zero(T))
     for iz =1:n_z
-        J[iz,iz] = exp( p̃[iz]) * Y - fp.ϵ * exp(p̃[iz]) * Y +
-         fp.β * (fp.ϵ + 1.0) * exp( (fp.ϵ + 1.0) * p̃[iz]) * E∂v̂[iz] +
-         fp.β * exp( (fp.ϵ + 2.0) * p̃[iz]) * E∂v̂²[iz]
+        J[iz,iz] = (1-fp.ϵ)*Y*exp( p̃[iz]) + fp.β * (fp.ϵ + 1.0) * exp( (fp.ϵ + 1.0) * p̃[iz]) * E∂v̂[iz] +
+                        fp.β * exp( (fp.ϵ + 2.0) * p̃[iz]) * E∂²v̂[iz]
     end
 
     return Void

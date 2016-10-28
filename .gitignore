@@ -1,0 +1,13 @@
+# All OUTPUT files
+!OUTPUT/*
+!OUTPUT/.gitkeep
+
+### Latex
+*.aux
+*.bbl
+*.log
+*.tex
+*.fdb_latexmk
+*.fls
+### Tags
+*.tags
