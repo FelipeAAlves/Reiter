@@ -5,8 +5,8 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \documentclass[a4paper,10pt]{article}  %scrartcl
 
-% \input{C:/Users/falves/Dropbox/TexFolder/preamble.tex} 
-\input{/Users/felipealves/Dropbox/TexFolder/preamble.tex}
+\input{C:/Users/falves/Dropbox/TexFolder/preamble.tex} 
+% \input{/Users/felipealves/Dropbox/TexFolder/preamble.tex}
 
 \title{ Example State-Dependent Pricing 2 \vspace{-5em}} % use 5
 % {
@@ -81,19 +81,20 @@
    %%%
    %%
    \item Value function for the firm
-   \[
-      V_t \left( a_t(h), \frac{ p_{t-1}(h) }{ P_t }; \ \cdot \ \right) = 
+   \begin{multline}
+      V_t \left( a_t(h), \frac{ p_{t-1}(h) }{ P_t }, \xi_t; \ \cdot \ \right) = 
       \max_{p} 
-      \bigg\{
-         \Pi^R \left( a_t(h), \frac{ p_{t-1}(h) }{ P_t }, \cdot \right) + 
-         \mathbb{E}_t \bigg[ D^R_{t,t+1} V_t \left( a_{t+1}(h), \frac{ p }{ P_{t+1} }, \cdot \right) \bigg]
-      \bigg\}
-   \]
+      \Bigg\{
+         \Pi^R \left( a_t(h), \frac{ p_{t-1}(h) }{ P_t }, \cdot \right) 
+         -\mathbbm{1} \{p \ne p_{t-1}(h ) \} \xi + \\
+         %%
+         + \mathbb{E}_t \bigg[ D^R_{t,t+1} V_{t+1} \left( a_{t+1}(h), \frac{ p }{ P_{t+1} }, \xi_{t+1}, \cdot \right) \bigg] \Bigg\}
+   \end{multline}
 
    %% 
-   \item 
+   \item Rewriting the problem
    \[
-      v(a, \tilde{p}; \ \cdot \ ) = \int_{\xi} \max \Big\{ V^A(  ) - \xi , V^N( )  \Big\}
+      v(a, \tilde{p}; \ \cdot \ ) = \int_{\xi} \max \Big\{ V^A(a,\tilde{p} ) - \xi w(\cdot) , \ V^N(a,\tilde{p} )  \Big\} dH(\xi )
    \]
    where
    %%%
@@ -102,13 +103,16 @@
       %%%
       \begin{split}
       V^A(a, \tilde{p}_{-1}, \ \cdot \ ) & = \max_{\tilde{p}} 
-         \bigg\{ 
+         \Bigg\{ 
             \Pi^R \left( a, \tilde{p}, \cdot \right) + 
-            \mathbb{E} \bigg[  \bigg]
-         \bigg\} \\
+            \mathbb{E} \bigg[ D^R(\cdot,\cdot) v\Big( a,\tilde{p} \pi_{t+1}^{-1} \Big) \bigg]
+         \Bigg\} \\
       %%
       V^N(a, \tilde{p}_{-1}, \ \cdot \ ) & = 
-          \Pi^R \left( a, \tilde{p}_{-1}, \cdot \right) + 
+          \Pi^R \left( a, \tilde{p}_{-1}, \cdot \right) + \mathbb{E}
+          \Big[ 
+               D^R(\cdot,\cdot) v\Big( a', \tilde{p}_{-1}\pi_{t+1}^{-1} \Big)
+          \Big]
       \end{split}
    \end{equation}
    %%%
@@ -116,19 +120,109 @@
    there is a unique threshold which makes the firm indifferent between these
    two options
    \[
-      \tilde{\xi}(a, \tilde{p} ; ) = V^A(a, \tilde{p} ) - V^N( a, \tilde{p})
+      \tilde{\xi}(a, \tilde{p} ; ) = \frac{V^A(a, \tilde{p} ) - V^N( a, \tilde{p})}{w}
    \]
+
    %% 
    \item The firm value function V , adjusted by the marginal utility of the representative households, is therefore given by
 \end{itemize}
 %%%
 
+%%%%%%% Household  
+%--------------------------------------------------------------------------------------------------------------------------
 \subsection{Household} % (fold)
 \label{sub:household}
 
 
-% subsection household (end)
 
+% Subsection household (end)
+%..........................................................................................................................
+
+%%%%%%% Equilibrium  
+%--------------------------------------------------------------------------------------------------------------------------
+\subsection{Equilibrium} % (fold)
+\label{sub:equilibrium}
+
+\begin{equil}
+   A recursive competitive equilibrium is a set of value functions $ \Big\{ v, V^A, V^{N} \Big\} $,
+   policies $ \{ \tilde{p}, \xi \} $ for the firm and household $ \Big\{ C( ), N( ) \Big\} $, 
+   and wage $ w $ such that
+   %%%
+   \begin{enumerate}
+      
+      %%
+      \item Firm optimization \\
+      Taking $ w,Y $ as given the value function solves the Bellman equation and
+      the $ \{ \tilde{p}, \xi \} $ are the associated policies
+
+      %% 
+      \item Household optimization \\
+      \[
+         R_t \mathbb{E} \bigg\{ \beta \frac{ u_c( C_{t+1} ) }{ u_c(C_t) } \frac{ P_{t} }{ P_{t+1} } \bigg\} = 1 
+         \qquad
+         N^{1/\varphi} = \frac{1}{\chi} C^{-\sigma}  w
+      \]
+
+      %% 
+      \item Market clearing\\
+      %% 
+      $\bullet $ Labor market
+      %%%
+      \begin{equation}
+         \label{eq:labor_market}
+         \left( \frac{1}{\chi} C^{-\sigma}  w \right)^{\varphi} = 
+         \int 
+         \left[ 
+            \frac{ \tilde{p}( a,\tilde{p}_{-1} )^{-\epsilon}Y }{ a }  + \left( \int^{\xi( )} \zeta dH( \zeta) \right) w 
+         \right]d\mu
+      \end{equation}
+      %%%
+      %% 
+      $\bullet $ Goods market
+      %%%
+      \begin{equation}
+         \label{eq:good_market}
+         C_t = Y_t = \left( \int y(h)^{ \frac{\epsilon-1}{\epsilon} } d\mu \right)^{ \frac{\epsilon}{\epsilon-1} }
+      \end{equation}
+      %%%
+      where $ y( a,\tilde{p}_{-1} ) = \Big( \tilde{p}(a,\tilde{p}_{-1}) \Big)^{-\epsilon} Y  $
+      %% 
+      \item Law of motion Distribution
+   \end{enumerate}
+   %%%
+\end{equil}
+% Subsection equilibrium (end)
+%..........................................................................................................................
+
+
+%%%%%%% Computation  
+%--------------------------------------------------------------------------------------------------------------------------
+\subsection{Computation} % (fold)
+\label{sub:computation}
+
+Compute Steady State
+%%%
+\begin{enumerate}
+   
+   %%
+   \item Guess a value for the wage $ w^* $
+   %% 
+   \item Given $ w^* $ compute the firm's value function by iterating on Bellman equation. 
+   Note that $ Y $ can be suppressed from the stationary Bellman because it is a multiplicative
+   constant. 
+   %% 
+   \item Using firm's decision rules, compute the invariant distribution
+   %% 
+   \item Compute aggregate supply using the invariant distribution 
+   \[
+      \frac{C}{Y} = \left( \int  \tilde{p}(a,\tilde{p}_{-1})^{1 -\epsilon} d\mu \right)^{ \frac{\epsilon}{\epsilon-1} }
+   \]
+   If $ <1 $ increase $ w $ otherwise decrease $ w $ ( {\em \color{blue} Check on code} )
+\end{enumerate}
+%%%
+
+% Subsection computation (end)
+%..........................................................................................................................
 % SECTION MODEL (END)
 %..............................................................................................................
 
