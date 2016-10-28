@@ -5,7 +5,6 @@
 # ======================================================================================
 # agrid0 = linspace(0.0.^0.4, 100.0.^0.4, 25).^(1/0.4)
 #
-#
 # # method two, constructing separately, then calling `Basis` with the two
 # y_basis = Basis(Cheb  , 5, -4.0, 4.0)     # Cheb
 # a_basis = Basis(Spline, agrid0, 0, 3)
@@ -59,9 +58,19 @@
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-# function solve_firm_policy()
-#     Φ_fac\
-# end
+function solve_firm_policy(w::Float64,Y::Float64,fp::FirmProblem)
+
+    Φ_fac = fp.Φ_fac
+
+    V = zeros(, 2)
+    while
+        bellman_rhs!(V, coeff, w, Y, fp)
+    end
+
+    coeff[:,1] = Φ_fac\V[:,1]
+    coeff[:,2] = Φ_fac\V[:,2]
+    coeff[:,3] = Φ_fac\V[:,3]
+end
 
 """
 Computes the RHS of our system of equations for a given guess of collocation
@@ -104,9 +113,13 @@ function bellman_rhs!(V::Array{Float64,2}, coeff::Array{Float64,2}, w::Float64, 
 
     #== FIND optimal p̃ in case of adjustment ==#
     f!(p̃, resid) = foc_price_adjust(resid, p̃, z_vals, w, Y, cv, fp, p̃_basis, Φ_z, ind_z_x_z)
-    @time res = nlsolve(f!, ones(n_z), autodiff = true)
+    g!(p̃, J)     = soc_price_adjust(resid, p̃, z_vals, w, Y, cv, fp, p̃_basis, Φ_z, ind_z_x_z)
+    @time res = nlsolve(f!, g!, ones(n_z), autodiff = true)
+    p̃star = res.zero
 
-
+    #== Value function ==#
+    value_adjust!(V, p̃, z_vals, w, Y, cv, Π_z, p̃_basis, Φ_z, ind_z_x_z, ind_z_x_p̃)
+    value_nadjust!(V, grid_nodes, w, Y, cv, Π_z, Φ)
 end
 
 function foc_price_adjust{T<:Real}(resid::Vector{T}, p̃::Vector{T}, z_vals, w, Y, cv, fp, p̃_basis, Φ_z, ind_z_x_z)
@@ -121,11 +134,38 @@ function foc_price_adjust{T<:Real}(resid::Vector{T}, p̃::Vector{T}, z_vals, w, 
     E∂v̂ = row_kron( eye(n_z) , fp.Π_z ) * ∂v̂
 
     for iz =1:n_z
-        resid[iz] = exp(-fp.ϵ * p̃[iz]) * Y - fp.ϵ * ( exp(p̃[iz]) - w/z_vals[iz] ) * exp( -(fp.ϵ + 1.0) * p̃[iz]) * Y + fp.β * E∂v̂[iz]
+        resid[iz] = exp( p̃[iz]) * Y - fp.ϵ * ( exp(p̃[iz]) - w/z_vals[iz] * Y +
+        fp.β * exp( (fp.ϵ + 1.0) * p̃[iz]) * E∂v̂[iz]
     end
 
     return Void
 end
+
+function soc_price_adjust{T<:Real}(J::Matrix{T}, p̃::Vector{T}, z_vals, w, Y, cv, fp, p̃_basis, Φ_z, ind_z_x_z)
+
+    n_z = length(z_vals)
+    # .....................................................................................
+
+    Φ_p̃_deriv  = BasisStructure( p̃_basis, Direct(), exp(p̃), 1).vals[1]
+    Φ_p̃_deriv2 = BasisStructure( p̃_basis, Direct(), exp(p̃), 2).vals[1]
+    Φ = row_kron( Φ_p̃_deriv[ ind_z_x_z[:,2], :], Φ_z[ ind_z_x_z[:,1], :] )
+    ∂v̂ = Φ * cv
+
+    Φ = row_kron( Φ_p̃_deriv2[ ind_z_x_z[:,2], :], Φ_z[ ind_z_x_z[:,1], :] )
+    ∂v̂² = Φ * cv
+
+    E∂v̂  = row_kron( eye(n_z) , fp.Π_z ) * ∂v̂
+    E∂v̂² = row_kron( eye(n_z) , fp.Π_z ) * ∂v̂²
+
+    for iz =1:n_z
+        J[iz,iz] = exp( p̃[iz]) * Y - fp.ϵ * exp(p̃[iz]) * Y +
+         fp.β * (fp.ϵ + 1.0) * exp( (fp.ϵ + 1.0) * p̃[iz]) * E∂v̂[iz] +
+         fp.β * exp( (fp.ϵ + 2.0) * p̃[iz]) * E∂v̂²[iz]
+    end
+
+    return Void
+end
+
 
 function foc_price_adjust(p̃, z_vals, w, Y, cv, fp, p̃_basis, Φ_z, ind_z_x_z)
 

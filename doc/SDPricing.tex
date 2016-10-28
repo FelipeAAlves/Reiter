@@ -5,13 +5,14 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \documentclass[a4paper,10pt]{article}  %scrartcl
 
-\input{C:/Users/falves/Dropbox/TexFolder/preamble.tex} 
+% \input{C:/Users/falves/Dropbox/TexFolder/preamble.tex} 
+\input{/Users/felipealves/Dropbox/TexFolder/preamble.tex}
 
-\title{ Example State-Dependent Pricing \vspace{-5em}} % use 5
+\title{ Example State-Dependent Pricing 2 \vspace{-5em}} % use 5
 % {
 %         \vspace{-0in}  
 %         \usefont{OT1}{bch}{b}{n}
-%         \normalfont \normalsize \ \[5pt]
+%         \normalfont \normalsize \
 %         \horrule{0.5pt} \[0.0cm]
 %         \huge Referee report on ``Learning, Confidence, and Business Cycles''  \[-0.5cm]
 %         \horrule{2pt} \[-0.5cm]
@@ -28,10 +29,6 @@
 
 \begin{document}
 \maketitle
-
-\begin{abstract}
-
-\end{abstract}
 
 %**************************************************************************************************************************
 %%%%%%% INTODUCTION
@@ -96,7 +93,7 @@
    %% 
    \item 
    \[
-      v(a, p/P; \ \cdot \ ) = \int_{\xi} \max \Big\{ V^A(  ) - \xi , V^N( )  \Big\}
+      v(a, \tilde{p}; \ \cdot \ ) = \int_{\xi} \max \Big\{ V^A(  ) - \xi , V^N( )  \Big\}
    \]
    where
    %%%
@@ -104,7 +101,7 @@
       \label{eq:model_eq4}
       %%%
       \begin{split}
-      V^A(a, \tilde{p}_{-11}, \ \cdot \ ) & = \max_{\tilde{p}} 
+      V^A(a, \tilde{p}_{-1}, \ \cdot \ ) & = \max_{\tilde{p}} 
          \bigg\{ 
             \Pi^R \left( a, \tilde{p}, \cdot \right) + 
             \mathbb{E} \bigg[  \bigg]
@@ -119,14 +116,18 @@
    there is a unique threshold which makes the firm indifferent between these
    two options
    \[
-      \tilde{\xi}( ) = V^A( ) - V^N( )
+      \tilde{\xi}(a, \tilde{p} ; ) = V^A(a, \tilde{p} ) - V^N( a, \tilde{p})
    \]
-
    %% 
    \item The firm value function V , adjusted by the marginal utility of the representative households, is therefore given by
 \end{itemize}
 %%%
 
+\subsection{Household} % (fold)
+\label{sub:household}
+
+
+% subsection household (end)
 
 % SECTION MODEL (END)
 %..............................................................................................................
@@ -141,8 +142,8 @@
 \clearpage
 \newpage
 %%%%% MAC
-% \bibliographystyle{/Users/Felipe/Dropbox/TexFolder/plainnat2}
-% \bibliography{/Users/Felipe/Dropbox/TexFolder/sample2}
+% \bibliographystyle{/Users/felipealves/Dropbox/TexFolder/plainnat2}
+% \bibliography{/Users/felipealves/Dropbox/TexFolder/sample2}
 %%%%% PC
 \bibliographystyle{C:/Users/falves/Dropbox/TexFolder/plainnat2}
 % \bibliography{C:/Users/falves/Dropbox/TexFolder/}

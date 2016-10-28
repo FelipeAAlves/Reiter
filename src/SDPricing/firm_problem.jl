@@ -1,5 +1,13 @@
 
-
+"""
+### Fields
+- `basis`   :
+- `z_basis` :
+- `p̃_basis`
+- Φ_tensor  :
+- Φ         :
+- Φ_fac     :
+"""
 type CollocStruct{BF1<:BasisFamily,BF2<:BasisFamily}
 
     basis::CompEcon.Basis{2}
@@ -11,26 +19,30 @@ type CollocStruct{BF1<:BasisFamily,BF2<:BasisFamily}
     Φ::Array{Float64,2}
     Φ_fac::Base.LinAlg.LU{Float64,Array{Float64,2}}
 
+    # Nodes
     z_nodes::Vector{Float64}
     n_z::Int64
     p̃_nodes::Vector{Float64}
     n_p̃::Int64
     grid_nodes::Array{Float64,2}
-
+    # coeffs
     coeff::Array{Float64,2}
+    # Indices
     ind_z_x_z::Array{Int64,2}
     ind_z_x_p̃::Array{Int64,2}
 end
 
 immutable FirmProblem{BF1<:BasisFamily,BF2<:BasisFamily}
-
+    # Parameters
     β::Float64
     ϵ::Float64
 
+    #Stochastic Process
     n_z::Int64
     Π_z::Matrix{Float64}
     z_vals::Vector{Float64}
 
+    # Basis Object
     mbasis::CollocStruct{BF1,BF2}
 end
 
