@@ -1,8 +1,0 @@
-!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
-!_TAG_FILE_SORTED	0	/0=unsorted, 1=sorted, 2=foldcase/
-!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
-!_TAG_PROGRAM_NAME	Exuberant Ctags	//
-!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
-!_TAG_PROGRAM_VERSION	5.8	//
-f!	/Users/felipealves/Git/Reiter/src/SDPricing/test.jl	/^f!(p̃, fvec) = Reiter.foc_price_adjust(fvec, p̃, z_vals, w, Y, cv, fp, p̃_basis, Φ_z, ind_z_x_z)$/;"	function	line:41
-g!	/Users/felipealves/Git/Reiter/src/SDPricing/test.jl	/^g!(p̃, J)    = Reiter.soc_price_adjust(J, p̃, z_vals, w, Y, cv, fp, p̃_basis, Φ_z, ind_z_x_z)$/;"	function	line:42

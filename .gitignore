@@ -6,8 +6,10 @@
 *.aux
 *.bbl
 *.log
-*.tex
+!*.tex
 *.fdb_latexmk
 *.fls
+*.out
+*.gz
 ### Tags
 *.tags
