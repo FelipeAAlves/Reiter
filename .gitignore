@@ -11,5 +11,7 @@
 *.fls
 *.out
 *.gz
+
 ### Tags
 *.tags
+.DS_Store
