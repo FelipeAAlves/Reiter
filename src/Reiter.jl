@@ -38,7 +38,9 @@ export
 # xxxx
 
 ##### includes
-include("SDPricing\\firm_problem.jl")
-include("SDPricing\\solve_col.jl")
+# include("SDPricing\\firm_problem.jl")
+# include("SDPricing\\solve_col.jl")
+include("SDPricing/firm_problem.jl")
+include("SDPricing/solve_col.jl")
 
 end # module

@@ -58,19 +58,19 @@
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function solve_firm_policy(w::Float64,Y::Float64,fp::FirmProblem)
-
-    Φ_fac = fp.Φ_fac
-
-    V = zeros(, 2)
-    while
-        bellman_rhs!(V, coeff, w, Y, fp)
-    end
-
-    coeff[:,1] = Φ_fac\V[:,1]
-    coeff[:,2] = Φ_fac\V[:,2]
-    coeff[:,3] = Φ_fac\V[:,3]
-end
+# function solve_firm_policy(w::Float64,Y::Float64,fp::FirmProblem)
+#
+#     Φ_fac = fp.Φ_fac
+#
+#     V = zeros(, 2)
+#     while
+#         bellman_rhs!(V, coeff, w, Y, fp)
+#     end
+#
+#     coeff[:,1] = Φ_fac\V[:,1]
+#     coeff[:,2] = Φ_fac\V[:,2]
+#     coeff[:,3] = Φ_fac\V[:,3]
+# end
 
 """
 Computes the RHS of our system of equations for a given guess of collocation
@@ -134,7 +134,7 @@ function foc_price_adjust{T<:Real}(resid::Vector{T}, p̃::Vector{T}, z_vals, w, 
     E∂v̂ = row_kron( eye(n_z) , fp.Π_z ) * ∂v̂
 
     for iz =1:n_z
-        resid[iz] = exp( p̃[iz]) * Y - fp.ϵ * ( exp(p̃[iz]) - w/z_vals[iz] * Y +
+        resid[iz] = exp( p̃[iz]) * Y - fp.ϵ * ( exp(p̃[iz]) - w/z_vals[iz]) * Y +
         fp.β * exp( (fp.ϵ + 1.0) * p̃[iz]) * E∂v̂[iz]
     end
 
