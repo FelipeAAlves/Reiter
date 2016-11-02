@@ -25,9 +25,6 @@ type CollocStruct{BF1<:BasisFamily,BF2<:BasisFamily}
     p̃_nodes::Vector{Float64}
     n_p̃::Int64
     grid_nodes::Array{Float64,2}
-    # coeffs
-    coeff::Array{Float64,2}
-    ξstar::Vector{Float64}
     # Indices
     ind_z_x_z::Array{Int64,2}
     ind_z_x_p̃::Array{Int64,2}
@@ -42,10 +39,16 @@ immutable FirmProblem{BF1<:BasisFamily,BF2<:BasisFamily}
     n_z::Int64
     Π_z::Matrix{Float64}
     z_vals::Vector{Float64}
+
     # Menu Cost
     ξbar::Float64
     H::Function
     cond_mean::Function
+
+    # coeffs
+    coeff::Array{Float64,2}
+    ξstar::Vector{Float64}
+    pstar::Vector{Float64}
 
     # Basis Object
     mbasis::CollocStruct{BF1,BF2}
@@ -74,7 +77,9 @@ function FirmProblem{BF1<:BasisFamily,BF2<:BasisFamily}(::Type{BF1}, ::Type{BF2}
     mbasis::CollocStruct{BF1,BF2} = CollocStruct(z_basis, p̃_basis)
 
     FirmProblem{BF1,BF2}(β, ϵ, n_z, Π_z, z_vals,
-                         ξbar, H, cond_mean, mbasis)
+                         ξbar, H, cond_mean,
+                         coeff, ξstar,pstar,
+                         mbasis)
 end
 
 function Base.show(io::IO, fp::FirmProblem)

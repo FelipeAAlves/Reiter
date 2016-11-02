@@ -24,7 +24,7 @@ ind_z_x_p̃ = fp.mbasis.ind_z_x_p̃;
 p̃_basis = fp.mbasis.p̃_basis;
 
 #== Guesses ==#
-w, Y = 0.5, 1.0
+w = 0.5
 
 ###                               TEST Value Iteration                               ###
 # **************************************************************************************
@@ -33,17 +33,17 @@ n_p̃     = fp.mbasis.n_p̃
 n_nodes = n_z*n_p̃
 
 Φ_fac   = fp.mbasis.Φ_fac;
-coeff = copy(fp.mbasis.coeff);
+coeff = copy(fp.coeff);
+ξstar = copy(fp.ξstar);
 # .....................................................................................
 tol = 1e-5
 V    = fp.mbasis.Φ * coeff;
 Vnew = similar(V);
-ξstar= similar(V[:,1]);
 
 ii = 1
 err = 1.0
 while ii <= 10 && err>tol
-    Reiter.bellman_rhs!(Vnew, ξstar, coeff, w, Y, fp)
+    Reiter.bellman_rhs!(Vnew, ξstar, coeff, w,  fp)
 
     # [Vnew ξstar]
     copy!(coeff,Φ_fac\Vnew)
