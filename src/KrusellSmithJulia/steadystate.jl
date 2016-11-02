@@ -9,9 +9,6 @@ function stst_histogram_resid(cp::ConsumerProblem, K::Real, ss_histogram::Union{
 
     nEps, nSavingsPar = cp.nEps, cp.nSavingsPar
 
-    # @printf("Outer loop (Prices) \n")
-    # println("---------------------------------------")
-
     #== Recover prices ==#
     R      = 1 + netintr(K);
     wage   = wagefunc(K);
@@ -81,27 +78,28 @@ Computes residual of asset market using the density as an approximation
 for the distribution.
 
 ### INPUT
+- `cp::ConsumerProblem`
+
 - `K`
 - `mMoments`
+- `init_moments`
+- `ss_density`
 """
-function stst_density_resid(cp::ConsumerProblem, K::Real, init_moments::Matrix{Float64}, ss_density::Union{Void,StstDensity} = Void())
+function stst_density_resid(cp::ConsumerProblem, K::Float64, init_moments::Matrix{Float64}, ss_density::Union{Void,StstDensity} = Void())
 
     nSavingsPar = cp.nSavingsPar
     nEps        = cp.nEps
 
-    # @printf("Outer loop (Prices) \n")
-    # @printf("   K : %6.4f\n", K)
-    # println("---------------------------------------")
-
-    #== GUESS prices ==#
+    #== Recover prices ==#
     R      = 1 + netintr(K);
     wage   = wagefunc(K);
 
     #=======================================================#
-    ### Compute Policy function for set of prices         ###
+    ###  Compute Policy function for set of prices        ###
     #=======================================================#
     @printf("   - Inner loop (Policy) \n")
     f!(Θ, fvec) = eulerres2!(fvec, Θ, Θ, R, R, wage, wage, cp)
+    @printf("      * Solving policy      : ")
     @time res = nlsolve(f!, cp.Θinit, autodiff = true)
 
     #== Save and reshape solution ==#
@@ -109,7 +107,7 @@ function stst_density_resid(cp::ConsumerProblem, K::Real, init_moments::Matrix{F
     mΘ = reshape(res.zero, nSavingsPar, nEps)
 
     #==============================================================#
-    ## Compute Stationary Distribution from decision rules        ##
+    ###  Compute Stationary Distribution from decision rules     ###
     #==============================================================#
     nMoments = size(init_moments,1)
     nCoeff   = nMoments+1
@@ -124,10 +122,6 @@ function stst_density_resid(cp::ConsumerProblem, K::Real, init_moments::Matrix{F
         S = interpolate(cp, mΘ[:,ieps])
         mAssetPrimeonQuad[:,ieps] = S[asset_quad_points]
     end
-
-    #============================================================#
-    ## Iterate on density moments - parameters - moments        ##
-    #============================================================#
 
     #== Find parameters from Initial moments ==#
     mDensityCoeff  = zeros(nCoeff, nEps)
@@ -153,7 +147,6 @@ function stst_density_resid(cp::ConsumerProblem, K::Real, init_moments::Matrix{F
         for ieps = 1:nEps
 
             #== Set up min PROBLEM ==#
-
             f(ρ) = density_int(ρ, mMoments[:,ieps], cp)
             g!(ρ,∇dens) = density_int_g!(ρ, ∇dens, mMoments[:,ieps], cp)
             res = optimize(f, g!, mParamCoeff[:,ieps])
@@ -228,7 +221,8 @@ function stst_density_resid(cp::ConsumerProblem, K::Real, init_moments::Matrix{F
         mMoments[:]       = mMomentsNext[:]
 
         if (err<=toldensity) || (max_iterdens==500)
-            @printf("    Iteration %3d:  Moments t CHECK: %.3e  distance: %.3e \n",iter, err_moments,err)
+            @printf("      * Solving distribution:  Iter   Mom t CHECK   distrances\n")
+            @printf("                               %3d     %.3e     %.3e \n", iter, err_moments, err)
 
         else
 
@@ -241,6 +235,7 @@ function stst_density_resid(cp::ConsumerProblem, K::Real, init_moments::Matrix{F
 
         iter += 1
     end
+    # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     #== Expected Capital ==#
     Ksupply = dot(cp.z_dist[:], mMoments'[:,1])
@@ -284,7 +279,7 @@ function expect_k{T<:Real}(vHistogram::Vector{T}, cp::ConsumerProblem)
 end
 
 """
-Computer the transition matrix
+Computer the Transition matrix from policies
 
 """
 function forward_mat{T<:Real}(cp::ConsumerProblem, Θ::Array{T})

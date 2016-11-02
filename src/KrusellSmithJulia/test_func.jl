@@ -1,112 +1,107 @@
 
-
-using Plots
-pyplot()
-using LaTeXStrings
-
-
+# **************************************************************************************
+#   TESTING policies
+#
+# ======================================================================================
 using NLsolve
 using Roots
 using ForwardDiff
 
-# --------------------------------------------------------------------------------------
-# % %%% %%% %%% %%% %%% %%% %%% %%% %%% %%% %%% %%% %%% %%% %%% %%% %%% %%% %%% %%% %%%
-# --------------------------------------------------------------------------------------
-#== Initialize Objects ==#
-Cons         = Reiter.ConsumerProblem();
-ss_histogram = Reiter.StstHistogram(Cons);
-#== Initialize Objects ==#
-Cons         = Reiter.ConsumerProblem();
-ss_histogram = Reiter.StstHistogram(Cons);
+# #== Initialize Objects ==#
+# Cons         = Reiter.ConsumerProblem();
+# ss_histogram = Reiter.StstHistogram(Cons);
+#
+# #== GUESS prices ==#
+# Rss      = 1 + Reiter.netintr(1.01*Cons.KrepSS, 0);
+# wagess   = Reiter.wagefunc(1.01*Cons.KrepSS, 0);
+#
+# ##  TEST eulerres fnc  ##
+# out1 = zeros(120*2)
+# out2 = zeros(120*2)
+# @time Reiter.eulerres1!(out1, Cons.Θinit , Cons.Θinit, Rss, Rss, wagess, wagess, Cons)
+# @time Reiter.eulerres2!(out2, Cons.Θinit , Cons.Θinit, Rss, Rss, wagess, wagess, Cons)
+#
+# @code_warntype Reiter.eulerres1!(out1, Cons.Θinit , Cons.Θinit, Rss, Rss, wagess, wagess, Cons)
+# @code_warntype Reiter.eulerres2!(out2, Cons.Θinit , Cons.Θinit, Rss, Rss, wagess, wagess, Cons)
+#
+# ##  TEST policy function  ##
+# f!(Θ, fvec) = Reiter.eulerres1!(fvec, Θ , Θ, Rss, Rss, wagess, wagess, Cons)
+# g!(Θ, fvec) = Reiter.eulerres2!(fvec, Θ , Θ, Rss, Rss, wagess, wagess, Cons)
+#
+# #== Compare performance ==#
+# # @time nlsolve(f!, Cons.Θinit)
+# @time nlsolve(f!, Cons.Θinit, autodiff = true)
+# @time nlsolve(g!, Cons.Θinit, autodiff = true)
+#
+# res1 = nlsolve(f!, Cons.Θinit, autodiff = true)
+# res2 = nlsolve(g!, Cons.Θinit, autodiff = true)
+# copy!(Cons.Θinit, res2.zero);
 
-#== GUESS prices ==#
-Rss      = 1 + Reiter.netintr(1.01*Cons.KrepSS, 0);
-wagess   = Reiter.wagefunc(1.01*Cons.KrepSS, 0);
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-##  TEST eulerres fnc  ##
-out1 = zeros(120*2)
-out2 = zeros(120*2)
-@time Reiter.eulerres1!(out1, Cons.Θinit , Cons.Θinit, Rss, Rss, wagess, wagess, Cons)
-@time Reiter.eulerres2!(out2, Cons.Θinit , Cons.Θinit, Rss, Rss, wagess, wagess, Cons)
-
-@code_warntype Reiter.eulerres1!(out1, Cons.Θinit , Cons.Θinit, Rss, Rss, wagess, wagess, Cons)
-@code_warntype Reiter.eulerres2!(out2, Cons.Θinit , Cons.Θinit, Rss, Rss, wagess, wagess, Cons)
-
-##  TEST policy function  ##
-f!(Θ, fvec) = Reiter.eulerres1!(fvec, Θ , Θ, Rss, Rss, wagess, wagess, Cons)
-g!(Θ, fvec) = Reiter.eulerres2!(fvec, Θ , Θ, Rss, Rss, wagess, wagess, Cons)
-
-#== Compare performance ==#
-# @time nlsolve(f!, Cons.Θinit)
-@time nlsolve(f!, Cons.Θinit, autodiff = true)
-@time nlsolve(g!, Cons.Θinit, autodiff = true)
-
-res1 = nlsolve(f!, Cons.Θinit, autodiff = true)
-res2 = nlsolve(g!, Cons.Θinit, autodiff = true)
-copy!(Cons.Θinit, res2.zero);
-# ..............................................................................
-
-# ******************************************************************
+# **************************************************************************************
 #   TEST Derivatives
-# ==================================================================
-using ForwardDiff
+#
+# ======================================================================================
 
-## TEST 01 : test the jacobian on the INTEPOLATION ##
-out = zeros(120*2);
-f!(y, Θ) = Reiter.test_jaco_interp!(y, Θ, Rss, wagess, Cons)
-J = ForwardDiff.jacobian( f!, out, Cons.Θinit, Chunk{10}())
+# using ForwardDiff
+#
+# ## TEST 01 : test the jacobian on the INTEPOLATION ##
+# out = zeros(120*2);
+# f!(y, Θ) = Reiter.test_jaco_interp!(y, Θ, Rss, wagess, Cons)
+# J = ForwardDiff.jacobian( f!, out, Cons.Θinit, Chunk{10}())
+#
+# @time ForwardDiff.jacobian( f!, out, Cons.Θinit, Chunk{2}() );
+# @time ForwardDiff.jacobian( f!, out, Cons.Θinit, Chunk{5}() );
+# @time ForwardDiff.jacobian( f!, out, Cons.Θinit, Chunk{10}());
+#
+# ##  TEST 02 : Do DUAL by hand  ##
+# Θ     = Dual{2,Float64}[Dual(Cons.Θinit[i],i==1,i==2 ) for i=1:240]
+# Θnext = Dual{2,Float64}[Dual(Cons.Θinit[i],0,0) for i=1:240]
+#
+# num, cons = Reiter.eulerres_test(Θ, Θnext, Rss, Rss, wagess, wagess, Cons)
+# # CHECK the value with what comes out of jacobian function
+# 1-num[2]/cons[2]
+#
+# f!(y, Θall) = Reiter.eulerres2!(y, Θall[1:240], Θall[241:end], Rss, Rss, wagess, wagess, Cons)
+# @time J = ForwardDiff.jacobian(f!, out, repmat(Cons.Θinit,2) );
+# # .....................................................................................
+#
+# ## TEST 03 : test the jacobian on Euler Residuals ##
+# f!(y, Θall) = Reiter.eulerres2!(y, Θall[1:240], Θall[241:end], Rss, Rss, wagess, wagess, Cons)
+#
+# #== No pre-allocation ==#
+# @time J = ForwardDiff.jacobian(f!, out, repmat(Cons.Θinit,2) );
+#
+# #== Pre-allocated ==#
+# Jout = ForwardDiff.JacobianResult(out);
+# @time ForwardDiff.jacobian!(Jout, f!, Cons.Θinit, Chunk{10}());
+# @time ForwardDiff.jacobian!(Jout, f!, Cons.Θinit, Chunk{5}());
+# @time ForwardDiff.jacobian!(Jout, f!, Cons.Θinit, Chunk{2}());
+#
+# Jout = similar(J)
+# f(Θ) = eulerres(Cons.Θinit, Θ, Rss, Rss, wagess, wagess, Cons)
+# @time J = ForwardDiff.jacobian!(Jout, f, Cons.Θinit);
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-@time ForwardDiff.jacobian( f!, out, Cons.Θinit, Chunk{2}() );
-@time ForwardDiff.jacobian( f!, out, Cons.Θinit, Chunk{5}() );
-@time ForwardDiff.jacobian( f!, out, Cons.Θinit, Chunk{10}());
 
-##  TEST 02 : Do DUAL by hand  ##
-Θ     = Dual{2,Float64}[Dual(Cons.Θinit[i],i==1,i==2 ) for i=1:240]
-Θnext = Dual{2,Float64}[Dual(Cons.Θinit[i],0,0) for i=1:240]
-
-num, cons = Reiter.eulerres_test(Θ, Θnext, Rss, Rss, wagess, wagess, Cons)
-# CHECK the value with what comes out of jacobian function
-1-num[2]/cons[2]
-
-f!(y, Θall) = Reiter.eulerres2!(y, Θall[1:240], Θall[241:end], Rss, Rss, wagess, wagess, Cons)
-@time J = ForwardDiff.jacobian(f!, out, repmat(Cons.Θinit,2) );
-# .....................................................................................
-
-## TEST 03 : test the jacobian on Euler Residuals ##
-f!(y, Θall) = Reiter.eulerres2!(y, Θall[1:240], Θall[241:end], Rss, Rss, wagess, wagess, Cons)
-
-#== No pre-allocation ==#
-@time J = ForwardDiff.jacobian(f!, out, repmat(Cons.Θinit,2) );
-
-#== Pre-allocated ==#
-Jout = ForwardDiff.JacobianResult(out);
-@time ForwardDiff.jacobian!(Jout, f!, Cons.Θinit, Chunk{10}());
-@time ForwardDiff.jacobian!(Jout, f!, Cons.Θinit, Chunk{5}());
-@time ForwardDiff.jacobian!(Jout, f!, Cons.Θinit, Chunk{2}());
-
-Jout = similar(J)
-f(Θ) = eulerres(Cons.Θinit, Θ, Rss, Rss, wagess, wagess, Cons)
-@time J = ForwardDiff.jacobian!(Jout, f, Cons.Θinit);
-# .....................................................................................
-
-# ******************************************************************
+# **************************************************************************************
 #   TEST Histogram SteadyState
-# ==================================================================
+# ======================================================================================
 
 #== Initialize Objects ==#
 Cons         = Reiter.ConsumerProblem();
 ss_histogram = Reiter.StstHistogram(Cons);
 
-f(k) = Reiter.stst_histogram_resid(Cons, k)
-Kss = fzero(f, 1.01*Cons.KrepSS, 1.05*Cons.KrepSS)
+f_hist(k) = Reiter.stst_histogram_resid(Cons, k)
+Kss = fzero(f_hist, 1.01*Cons.KrepSS, 1.05*Cons.KrepSS)
 
 #== UPDATE ss_histogram ==#
 Reiter.stst_histogram_resid(Cons, Kss, ss_histogram)
 
-# ******************************************************************
+# **************************************************************************************
 #   TEST Density SteadyState
-# ==================================================================
-
+# ======================================================================================
 ss_density = Reiter.StstDensity(Cons);
 
 #== Compute moments from histogram  ==#
@@ -118,18 +113,17 @@ for ieps = 1:Cons.nEps
     end
 end
 
-f(k) = Reiter.stst_density_resid(Cons, k, mMoments)
-Kss_density = fzero(f, 0.995*ss_histogram.Kaggr, 1.005*ss_histogram.Kaggr)
+f_dens(k) = Reiter.stst_density_resid(Cons, k, mMoments)
+Kss_density = fzero(f_dens, 0.995*ss_histogram.Kaggr, 1.005*ss_histogram.Kaggr)
 
-#== UPDATE ss_histogram ==#
+#== UPDATE ss_density ==#
 Reiter.stst_density_resid(Cons, Kss_density, mMoments, ss_density)
 
 # ******************************************************************
 #   FIGURE : Histogram × Density
 # ==================================================================
-using Plots
+using Plots, LaTeXStrings
 pyplot() # plotlyjs()
-using LaTeXStrings
 
 asset_grid_fine = Cons.asset_grid_fine;
 asset_quad_points = Cons.asset_quad_points;
@@ -150,16 +144,16 @@ ieps = 2
     plot!(asset_grid_fine, dens, color=:red, linewidth=2, label=LaTeXString("\$g_{2}(a)\$"), legendfont=font(12));
 
 titles = ["Unemp" "Employed"]
-plot(p1, p2, layout=2, title=titles)
+p_hist_x_dens = plot(p1, p2, layout=2, title=titles);
 
-# ******************************************************************
-#   LINEARIZATION Step
-# ==================================================================
+# **************************************************************************************
+#   Linearization STEP
+# ======================================================================================
 println("STEP [2]: Linearizing model equations")
-println("STEP [3]: Solving the model")
 
 ###  Construct Y  ###
 # *************************************************************************************
+
 #== Construct iYvar==#
 iYvar = Dict{Symbol, Union{UnitRange{Int64}, Int64}}()
 
@@ -208,6 +202,7 @@ c  =  zeros( size(Jout,1) ) ;
 # ```
 # Γ0*y(t) = Γ1*y(t-1) + c + Ψ*z(t) + Π*η(t),
 # ```
+println("STEP [3]: Solving the model")
 Phi, cons, B, _, _, _, _, eu, _ = gensysdt(Γ0, Γ1, c, Ψ, Π, 1.0 + 1e-10);
 if !((eu[1] == 1) & (eu[2] == 1))
     throw(error("Gensys does not give existence"))
@@ -230,10 +225,11 @@ end
 #
 # """
 
-
-# ******************************************************************
+# **************************************************************************************
 #   FIGURES
-# ==================================================================
+#
+# ======================================================================================
+
 H   = eye(size(Phi,1));
 lss = LSS(Phi, B, H)  ;# mu_0 = zeros(size(G, 2), Sigma_0 = zeros(size(H, 2), size(H, 2)) )
 
@@ -244,6 +240,7 @@ X_simul = X_simul + repmat(Xss,1,simul_length);
 nEps        = Cons.nEps
 nSavingsPar = Cons.nSavingsPar
 nAssetsFine = Cons.nAssetsFine
+asset_grid_fine = Cons.asset_grid_fine
 nHistogram  = nAssetsFine * Cons.nEps
 iXvar              = ss_histogram.iXvar
 
@@ -257,9 +254,8 @@ Histogram_simul    = zeros(nAssetsFine,simul_length);
 
 vHistogram  = zeros(nHistogram) ;
 vHistogramK = zeros(nAssetsFine);
-Cpol_simul  = zeros(nAssetsFine*nEps, simul_length);
+Cpol        = zeros(nAssetsFine*nEps);
 
-asset_grid_fine = Cons.asset_grid_fine
 for t = 1:simul_length
 
     #== Histogram ==#
@@ -292,12 +288,7 @@ for ieps =1:nEps
 end
 
 # .....................................................................................
-
-using Plots
-using LaTeXStrings        # Install this package
-# plotlyjs()
-pyplot()
-
+plotlyjs()
 y_vals = []
 labels = []
 
@@ -309,10 +300,14 @@ push!(y_vals, Cpol_SS[:,2])
 push!(y_vals, Cpol_simul[(1:nAssetsFine)+nAssetsFine, ind[1] ])
 push!(y_vals, Cpol_simul[(1:nAssetsFine)+nAssetsFine, ind[2] ])
 
-plot(asset_grid_fine, y_vals, linewidth=2, alpha=0.6, xlim=[0.0, 0.5*asset_grid_fine[end] ])
-
-plot(asset_grid_fine, Cpol_SS[:,1], linewidth=2, alpha=0.6)
+#== Consumption policies ==#
+psim1 = plot(asset_grid_fine, y_vals, linewidth=2, alpha=0.6, xlim=[0.0, 0.5*asset_grid_fine[end] ]);
 
 #== Histogram ==#
-bar(Cons.asset_grid_fine, [Histogram_simul[:,1] Histogram_simul[:,ind[1]] Histogram_simul[:,ind[2]]], alpha=0.6)
-# -------------------------------------------------------------------------------------
+psim2 = bar(Cons.asset_grid_fine, [Histogram_simul[:,1] Histogram_simul[:,ind[1]] Histogram_simul[:,ind[2]]], alpha=0.6);
+
+# commands to plot
+plot(psim1)
+plot(psim2)
+plot(p_hist_x_dens)
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

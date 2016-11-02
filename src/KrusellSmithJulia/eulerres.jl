@@ -101,15 +101,19 @@ end
 
 
 """
-Computes the euler residual at collocation nodes (better performance)
+Computes the euler residual at collocation nodes (best performance overall)
 
 ### INPUTS
+- `out`
 - `Θ`
 - `Θ′`
+
 - `R`
 - `R′`
+
 - `wage`
 - `wage′`
+
 - `cp::ConsumerProblem`
 """
 function eulerres2!{T,J<:Real}(out::Vector{T}, Θ::Vector{T}, Θ′::Vector{T}, R::J, R′::J, wage::J, wage′::J, cp::ConsumerProblem)
@@ -124,7 +128,7 @@ function eulerres2!{T,J<:Real}(out::Vector{T}, Θ::Vector{T}, Θ′::Vector{T}, 
     mΘ′ = reshape(Θ′, nSavingsPar, nEps)
 
     #== Pre-allocate ==#
-    cthis = Array(T, nSavingsPar)                                               ##  IMPORTANT:  container must accept the Dual  ##
+    cthis = Array(T, nSavingsPar)
     cnext = Array(T, nSavingsPar)
     anext = Array(T, nSavingsPar)
     MUexp = Array(T, nSavingsPar)

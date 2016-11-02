@@ -1,14 +1,20 @@
 
 """
-Description of the Household Problem
+Description of Household Problem
 
 ## Fields
 - `β`
 - `γ`
 
+- `nSavingsPar`
 - `a̲`
 - `asset_knots`
+
+- `nAssetsFine`
 - `asset_grid_fine`
+
+- nQuad
+- nMoments
 
 - `z_vals`
 - `Π`
