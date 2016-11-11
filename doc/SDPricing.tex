@@ -62,21 +62,19 @@
    %%%
 
    %% 
-   \item Profits
-   
-   %% 
-   \item Each firm chooses prices $ \{\} $ in order to maximize its market value
+   \item Each firm $h$ chooses prices $ \{p_t\}_{t} $ in order to maximize its market value
    %%%
    \begin{equation}
       \label{eq:model_eq}
       \mathbb{E}_t \sum_{\tau=0}^{\infty} D_{t,t+\tau} \Pi_{t+\tau} (h)
    \end{equation}
    %%%
-   where nominal profits in period $ t $ are given by
+   where $D_{t,t+\tau}$ is the nominal stochastic discount factor of the agent and $\Pi_{t+\tau} (h)  $
+   are the nominal profits in period $ t $ given by
    %%%
    \begin{equation}
       \label{eq:model_eq3}
-      \Pi_t(h) = p_t(h) y_t(h) - W_t \ell_t(h) - \kappa_t(h) \mathbbm{1}\{p_t(h) \ne p_{t-1}(h)\}
+      \Pi_t(h) = p_t(h) y_t(h) - W_t \ell_t(h) - \xi_t(h) \mathbbm{1}\{p_t(h) \ne p_{t-1}(h)\}
    \end{equation}
    %%%
    %%
@@ -90,11 +88,21 @@
          %%
          + \mathbb{E}_t \bigg[ D^R_{t,t+1} V_{t+1} \left( a_{t+1}(h), \frac{ p }{ P_{t+1} }, \xi_{t+1}, \cdot \right) \bigg] \Bigg\}
    \end{multline}
+   % \begin{multline}
+   %    V_t \left( a, \frac{ p_{-1}(h) }{ P }, \xi; \ \cdot \ \right) = 
+   %    \max_{p} 
+   %    \Bigg\{
+   %       \Pi^R \left( a, \frac{ p_{-1} }{ P }, \cdot \right) 
+   %       -\mathbbm{1} \{p \ne p_{-1} \} \xi + \\
+   %       %%
+   %       + \mathbb{E}_t \bigg[ D^R_{t,t+1} V_{t+1} \left( a_{t+1}(h), \frac{ p }{ P_{t+1} }, \xi_{t+1}, \cdot \right) \bigg] \Bigg\}
+   % \end{multline}
+
 
    %% 
    \item Rewriting the problem
    \[
-      v(a, \tilde{p}; \ \cdot \ ) = \int_{\xi} \max \Big\{ V^A(a,\tilde{p} ) - \xi w(\cdot) , \ V^N(a,\tilde{p} )  \Big\} dH(\xi )
+      v(a, \tilde{p}_{-1}; \ \cdot \ ) = \int_{\xi} \max \Big\{ V^A(a,\tilde{p}_{-1}; \ \cdot \ ) - \xi w(\cdot) , \ V^N(a,\tilde{p}_{-1} ; \ \cdot \ )  \Big\} dH(\xi )
    \]
    where
    %%%
@@ -102,29 +110,37 @@
       \label{eq:model_eq4}
       %%%
       \begin{split}
-      V^A(a, \tilde{p}_{-1}, \ \cdot \ ) & = \max_{\tilde{p}} 
+      V^A(a, \tilde{p}_{-1}; \ \cdot \ ) & = \max_{\tilde{p}} 
          \Bigg\{ 
             \Pi^R \left( a, \tilde{p}, \cdot \right) + 
-            \mathbb{E} \bigg[ D^R(\cdot,\cdot) v\Big( a,\tilde{p} \pi_{t+1}^{-1} \Big) \bigg]
+            \mathbb{E} \bigg[ D^R(\cdot,\cdot) v\Big( a,\tilde{p} \pi_{t+1}^{-1} ; \ \cdot \ \Big) \bigg]
          \Bigg\} \\
       %%
-      V^N(a, \tilde{p}_{-1}, \ \cdot \ ) & = 
+      V^N(a, \tilde{p}_{-1}; \ \cdot \ ) & = 
           \Pi^R \left( a, \tilde{p}_{-1}, \cdot \right) + \mathbb{E}
           \Big[ 
-               D^R(\cdot,\cdot) v\Big( a', \tilde{p}_{-1}\pi_{t+1}^{-1} \Big)
+               D^R(\cdot,\cdot) v\Big( a', \tilde{p}_{-1}\pi_{t+1}^{-1} ; \ \cdot \  \Big)
           \Big]
       \end{split}
    \end{equation}
    %%%
-   The firm will choose to pay the fixed cost iff $ V^A -\xi \ge V^N $. Hence,
-   there is a unique threshold which makes the firm indifferent between these
-   two options
+   The firm will choose to pay the fixed cost iff $ V^A -\xi \ge V^N $. Hence, for 
+   each individual state $ a, \tilde{p}_{-1} $ there is a unique threshold which makes the firm 
+   indifferent between these two options
    \[
       \tilde{\xi}(a, \tilde{p} ; ) = \frac{V^A(a, \tilde{p} ) - V^N( a, \tilde{p})}{w}
    \]
 
    %% 
-   \item The firm value function V , adjusted by the marginal utility of the representative households, is therefore given by
+   \item The firm value function $V$ is therefore given by
+   \begin{equation}
+      v(a, \tilde{p}_{-1}; \ \cdot \ ) = 
+         \int_0^{ \xi(a,\tilde{p}_{-1} ) } 
+         \Big[ 
+            V^A(a, \tilde{p}_{-1} ; \ \cdot \ ) - \xi w(\cdot) 
+         \Big]d\xi  
+         + \Big[  1 - H\Big( \tilde{\xi}(a, \tilde{p}_{-1} ; ) \Big) \Big] V^N(a,\tilde{p}_{-1} ; \ \cdot \ )
+   \end{equation}
 \end{itemize}
 %%%
 
@@ -146,25 +162,25 @@
 \begin{equil}
    A recursive competitive equilibrium is a set of value functions $ \Big\{ v, V^A, V^{N} \Big\} $,
    policies $ \{ \tilde{p}, \xi \} $ for the firm and household $ \Big\{ C( ), N( ) \Big\} $, 
-   and wage $ w $ such that
+   and wage $ w(\cdot) $ such that
    %%%
    \begin{enumerate}
       
       %%
       \item Firm optimization \\
-      Taking $ w,Y $ as given the value function solves the Bellman equation and
+      Taking $ w(),Y() $ as given the value function solves the Bellman equation and
       the $ \{ \tilde{p}, \xi \} $ are the associated policies
 
       %% 
       \item Household optimization \\
       \[
-         R_t \mathbb{E} \bigg\{ \beta \frac{ u_c( C_{t+1} ) }{ u_c(C_t) } \frac{ P_{t} }{ P_{t+1} } \bigg\} = 1 
+         R_t \mathbb{E} \bigg\{ \beta \frac{ u_c( C_{t+1} ) }{ u_c(C_t) } \frac{ P_{t} }{ P_{t+1} } \bigg\} = 1 , 
          \qquad
-         N^{1/\varphi} = \frac{1}{\chi} C^{-\sigma}  w
+         N^{1/\varphi} = \frac{1}{\chi} C^{-\sigma}  w( \cdot )
       \]
 
       %% 
-      \item Market clearing\\
+      \item Market clearing \\ \ \\
       %% 
       $\bullet $ Labor market
       %%%
@@ -181,8 +197,12 @@
       $\bullet $ Goods market
       %%%
       \begin{equation}
-         \label{eq:good_market}
-         C_t = Y_t = \left( \int y(h)^{ \frac{\epsilon-1}{\epsilon} } d\mu \right)^{ \frac{\epsilon}{\epsilon-1} }
+         \label{eq:goods_market}
+         %%%
+         \begin{split}
+            C_t = Y_t & = \left( \int_0^1 y(h)^{ \frac{\epsilon-1}{\epsilon} } dh \right)^{ \frac{\epsilon}{\epsilon-1} } \\
+                      & = \left( \int_0^1 y( a,\tilde{p}_{-1} ) d\mu \right)^{ \frac{\epsilon}{\epsilon-1} }
+         \end{split}
       \end{equation}
       %%%
       where $ y( a,\tilde{p}_{-1} ) = \Big( \tilde{p}(a,\tilde{p}_{-1}) \Big)^{-\epsilon} Y  $
@@ -208,8 +228,8 @@ Compute Steady State
    \item Guess a value for the wage $ w^* $
    %% 
    \item Given $ w^* $ compute the firm's value function by iterating on Bellman equation. 
-   Note that $ Y $ can be suppressed from the stationary Bellman because it is a multiplicative
-   constant. 
+   \emph{Note that $ Y $ can be suppressed from the stationary Bellman because it is a multiplicative
+      constant}. 
    %% 
    \item Using firm's decision rules, compute the invariant distribution
    %% 
@@ -225,6 +245,68 @@ Compute Steady State
 %..........................................................................................................................
 % SECTION MODEL (END)
 %..............................................................................................................
+
+%%%%%%% How to do the perturbation of policy  
+%--------------------------------------------------------------------------------------------------------------------------
+\subsection{How to do the perturbation of policy} % (fold)
+\label{sub:how_to_do_the_perturbation_of_policy}
+
+Policy outside steady state must satisfy
+%%%
+\begin{equation}
+   \label{eq:maximization_prob}
+   x'(z,x; X_t ) = \argmax_{x'} \bigg\{ U(z,x,x'; X_t) + \beta \  \text{itp} \Big[ V_{E,t} , V_{E}^* \Big]( x' ) \bigg\}
+\end{equation}
+%%%
+where
+%%%
+\begin{equation}
+   \label{eq:interpol}
+   \text{itp} \Big[ V_{E,t}^*, V_{E}^{*} \Big]( \tilde{x} ) = V_{E}^*( \tilde{x} ) + 
+      \frac{ \tilde{x} - \bar{x}_i }{ \bar{x}_{i+1} - \bar{x}_i } \Big( V_{E,t}[i+1] - V_{E,t}^{*}(\bar{x}_{i+1}) \Big) +
+      \frac{ \bar{x}_{i+1} -\tilde{x} }{ \bar{x}_{i+1} - \bar{x}_i } \Big( V_{E,t}[i] - V_{E,t}^{*}(\bar{x}_i) \Big)
+\end{equation}
+%%%
+so that in steady state the whole expression reduces to simply $ V^*( \tilde{x} ) $.
+
+Taking \emph{foc}
+%%%
+\begin{equation}
+   \label{eq:foc}
+   0 = U_{x'} \Big( z, x, x'(z,x;X_t ); X_t \Big) + \beta 
+   \left[
+      \frac{ dV_E^*(x'( z,x;X_t) ) }{ dx } + \frac{ dV_{E,t}[ i+1 ] - dV_{E,t}[i] }{ \bar{x}_{i+1} - \bar{x}_{i} }
+   \right]  
+   \tag{dvdc}
+\end{equation}
+which at steady-state satisfy
+%%%
+\begin{equation*}
+   \label{eq:focstst}
+   0 = U_{x'} \Big( z, x, x^*(z,x); X^* \Big) + \beta 
+   \left[
+      \frac{ dV_E^* \Big(x^*(z,x) \Big) }{ dx }
+   \right]  
+\end{equation*}
+%%%
+while the \emph{soc} at steady state values
+%%%
+\begin{equation}
+   \label{eq:soc}
+   U_{x'x'} \Big( z,x, x^*(z,x); X^* \Big) + \beta \frac{d^2V^*\Big( x^*(z,x) \Big)}{dx^2}
+   \tag{d2vdc2}
+\end{equation}
+%%%
+
+Hence
+%%%
+\begin{equation}
+   \label{eq:}
+   \frac{ dx'\Big( z,x; X_t\Big) }{ dX_t } = - \frac{1}{ \text{d2vdc2} } \Big( \text{d2vdc2.der} \Big)
+\end{equation}
+%%%   
+% Subsection how_to_do_the_perturbation_of_policy (end)
+%..........................................................................................................................
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%% End document

@@ -1,8 +1,66 @@
 
-using CompEcon
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+# **************************************************************************************
+#   FIND optimal p̃ in case of adjustment
+#
+# ======================================================================================
+# cv = coeff[:,3]
+# pstar = log( fp.ϵ/(fp.ϵ-1.0) * w./z_vals);
+#
+# resid = zeros(10);
+# Reiter.foc_price_adjust!(resid, zeros(10), z_vals, w, Y, cv, fp, p̃_basis, Φ_z, ind_z_x_z)
+# resid
+#
+# f!(p̃, fvec) = Reiter.foc_price_adjust!(fvec, p̃, z_vals, w, Y, cv, fp, p̃_basis, Φ_z, ind_z_x_z)
+# g!(p̃, J)    = Reiter.soc_price_adjust!(J, p̃, z_vals, w, Y, cv, fp, p̃_basis, Φ_z, ind_z_x_z)
+#
+# @time res1 = nlsolve(f!, zeros(10))
+# @time res2 = nlsolve(f!, g!, zeros(10))
+# [exp(res1.zero) exp(res2.zero) exp(pstar)]
+#
+# #== FIND optimal p̃ in case of adjustment ==#
+#
+# # Solve for optimal price
+# pstar = log( fp.ϵ/(fp.ϵ-1.0) * w./z_vals);
+#
+# resid = zeros(10);
+# Reiter.foc_price_adjust!(resid, zeros(10), z_vals, w, Y, cv, fp, p̃_basis, Φ_z, ind_z_x_z)
+# resid
+#
+# f!(p̃, fvec) = Reiter.foc_price_adjust!(fvec, p̃, z_vals, w, Y, cv, fp, p̃_basis, Φ_z, ind_z_x_z)
+# @time res = nlsolve(f!, zeros(10))
+# [exp(res.zero) exp(pstar)]
+# # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+#
+# # test function
+# resid = zeros(10);
+# Reiter.foc_price_adjust!(resid, zeros(10), z_vals, w, Y, cv, fp, p̃_basis, Φ_z, ind_z_x_z)
+# resid
+#
+# resid[:] = 0.0;
+# Reiter.foc_price_adjust!(resid, pstar, z_vals, w, Y, cv, fp, p̃_basis, Φ_z, ind_z_x_z)
+# resid
+#
+# Jout = zeros(10,10);
+# Reiter.soc_price_adjust!(Jout, pstar, z_vals, w, Y, cv, fp, p̃_basis, Φ_z, ind_z_x_z)
+# Jout
+#
+# f!(p̃, fvec) = Reiter.foc_price_adjust!(fvec, p̃, z_vals, w, Y, cv, fp, p̃_basis, Φ_z, ind_z_x_z)
+# g!(p̃, J)    = Reiter.soc_price_adjust!(J, p̃, z_vals, w, Y, cv, fp, p̃_basis, Φ_z, ind_z_x_z)
+#
+# @time res = nlsolve(f!, zeros(10), autodiff = true)
+# @time res1 = nlsolve(f!, zeros(10))
+# @time res2 = nlsolve(f!, g!, zeros(10))
+# [exp(res1.zero) exp(res2.zero) exp(pstar)]
+
+
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+using BasisMatrices
 using NLsolve
 
 fp = Reiter.FirmProblem(Spline,Cheb)
+# fp = Reiter.FirmProblem(Spline,Cubic)
 
 coeff = zeros(300,3);
 ca = coeff[:,1];
@@ -43,7 +101,7 @@ Vnew = similar(V);
 ii = 1
 err = 1.0
 while ii <= 10 && err>tol
-    Reiter.bellman_rhs!(Vnew, ξstar, coeff, w,  fp)
+    Reiter.bellman_rhs!(Vnew, coeff, w,  fp)
 
     # [Vnew ξstar]
     copy!(coeff,Φ_fac\Vnew)
@@ -60,58 +118,45 @@ end
 copy!(fp.coeff, coeff)
 copy!(fp.ξstar, ξstar)
 
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-cv = coeff[:,3]
-pstar = log( fp.ϵ/(fp.ϵ-1.0) * w./z_vals);
-
-resid = zeros(10);
-Reiter.foc_price_adjust!(resid, zeros(10), z_vals, w, Y, cv, fp, p̃_basis, Φ_z, ind_z_x_z)
-resid
-
-f!(p̃, fvec) = Reiter.foc_price_adjust!(fvec, p̃, z_vals, w, Y, cv, fp, p̃_basis, Φ_z, ind_z_x_z)
-g!(p̃, J)    = Reiter.soc_price_adjust!(J, p̃, z_vals, w, Y, cv, fp, p̃_basis, Φ_z, ind_z_x_z)
-
-@time res1 = nlsolve(f!, zeros(10))
-@time res2 = nlsolve(f!, g!, zeros(10))
-[exp(res1.zero) exp(res2.zero) exp(pstar)]
-
-#== FIND optimal p̃ in case of adjustment ==#
+# --------------------------------------------------------------------------------------
+# % %%% %%% %%% %%% %%% %%% %%% %%% %%% %%% %%% %%% %%% %%% %%% %%% %%% %%% %%% %%% %%%
+# --------------------------------------------------------------------------------------
 
 # **************************************************************************************
-#   FIND optimal p̃ in case of adjustment
+#   USING code
 #
 # ======================================================================================
-# Solve for optimal price
-pstar = log( fp.ϵ/(fp.ϵ-1.0) * w./z_vals);
+using BasisMatrices
+# fp = Reiter.FirmProblem(Spline,Cheb)
+fp = Reiter.FirmProblem(Spline,Spline)
 
-resid = zeros(10);
-Reiter.foc_price_adjust!(resid, zeros(10), z_vals, w, Y, cv, fp, p̃_basis, Φ_z, ind_z_x_z)
-resid
+# range for marginal cost 
+# 0.80./fp.z_vals
 
-f!(p̃, fvec) = Reiter.foc_price_adjust!(fvec, p̃, z_vals, w, Y, cv, fp, p̃_basis, Φ_z, ind_z_x_z)
-@time res = nlsolve(f!, zeros(10))
-[exp(res.zero) exp(pstar)]
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Reiter.solve_firm_policy!(1.0, fp)
 
-# test function
-resid = zeros(10);
-Reiter.foc_price_adjust!(resid, zeros(10), z_vals, w, Y, cv, fp, p̃_basis, Φ_z, ind_z_x_z)
-resid
+fill!(fp.coeff,0.0)
+Reiter.solve_firm_policy!(0.80, fp)
 
-resid[:] = 0.0;
-Reiter.foc_price_adjust!(resid, pstar, z_vals, w, Y, cv, fp, p̃_basis, Φ_z, ind_z_x_z)
-resid
+fill!(fp.coeff,0.0)
+Reiter.solve_firm_policy!(0.55, fp)
 
-Jout = zeros(10,10);
-Reiter.soc_price_adjust!(Jout, pstar, z_vals, w, Y, cv, fp, p̃_basis, Φ_z, ind_z_x_z)
-Jout
+fill!(fp.coeff,0.0)
+Reiter.solve_firm_policy!(0.50, fp)
 
-f!(p̃, fvec) = Reiter.foc_price_adjust!(fvec, p̃, z_vals, w, Y, cv, fp, p̃_basis, Φ_z, ind_z_x_z)
-g!(p̃, J)    = Reiter.soc_price_adjust!(J, p̃, z_vals, w, Y, cv, fp, p̃_basis, Φ_z, ind_z_x_z)
+fill!(fp.coeff,0.0)
+Reiter.solve_firm_policy!(0.40, fp)
 
-@time res = nlsolve(f!, zeros(10), autodiff = true)
-@time res1 = nlsolve(f!, zeros(10))
-@time res2 = nlsolve(f!, g!, zeros(10))
-[exp(res1.zero) exp(res2.zero) exp(pstar)]
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+fill!(fp.coeff,0.0)
+Reiter.solve_firm_policy!(0.30, fp)
+
+
+
+fill!(fp.coeff,0.0)
+Reiter.solve_firm_policy!(0.70, fp)
+
+fill!(fp.coeff,0.0)
+Reiter.solve_firm_policy!(0.25, fp)
+
+[fp.coeff fp.ξstar]
+fp.pstar

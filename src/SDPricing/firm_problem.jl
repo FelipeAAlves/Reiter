@@ -1,31 +1,36 @@
 
 """
+    Holds information on collocation structure of the problem
+
 ### Fields
 - `basis`   :
+
 - `z_basis` :
-- `p̃_basis`
+- `p̃_basis` :
+
 - `Φ_tensor`  :
 - `Φ`         :
 - `Φ_fac`     :
+
+
 """
 type CollocStruct{BF1<:BasisFamily,BF2<:BasisFamily}
 
-    basis::CompEcon.Basis{2}
-    z_basis::CompEcon.Basis{1,BF1}
-    p̃_basis::CompEcon.Basis{1,BF2}
+    basis::BasisMatrices.Basis{2}
+    z_basis::BasisMatrices.Basis{1,BF1}
+    p̃_basis::BasisMatrices.Basis{1,BF2}
 
-    Φ_tensor::CompEcon.BasisStructure{CompEcon.Tensor}
-
+    Φ_tensor::BasisMatrices.BasisStructure{BasisMatrices.Tensor}
     Φ::Array{Float64,2}
-    Φ_fac::Base.LinAlg.LU{Float64,Array{Float64,2}}
+    Φ_fac::Union{Base.SparseArrays.UMFPACK.UmfpackLU{Float64,Int64},Base.LinAlg.LU{Float64,Array{Float64,2}}}
 
-    # Nodes
+    ##  Nodes INFO  ##
     z_nodes::Vector{Float64}
     n_z::Int64
     p̃_nodes::Vector{Float64}
     n_p̃::Int64
     grid_nodes::Array{Float64,2}
-    # Indices
+    ##  Useful indices ##
     ind_z_x_z::Array{Int64,2}
     ind_z_x_p̃::Array{Int64,2}
 end
@@ -35,22 +40,22 @@ immutable FirmProblem{BF1<:BasisFamily,BF2<:BasisFamily}
     β::Float64
     ϵ::Float64
 
-    #Stochastic Process
+    ##  Stochastic Process  ##
     n_z::Int64
     Π_z::Matrix{Float64}
     z_vals::Vector{Float64}
 
-    # Menu Cost
+    ##  Menu Cost  ##
     ξbar::Float64
     H::Function
     cond_mean::Function
 
-    # coeffs
+    ##  Policies  ##
     coeff::Array{Float64,2}
     ξstar::Vector{Float64}
     pstar::Vector{Float64}
 
-    # Basis Object
+    ##  Basis Object  ##
     mbasis::CollocStruct{BF1,BF2}
 end
 
@@ -58,27 +63,45 @@ function FirmProblem{BF1<:BasisFamily,BF2<:BasisFamily}(::Type{BF1}, ::Type{BF2}
 
     #== Stochastic productivity ==#
     n_z = 10
-    mc  = rouwenhorst(n_z, 0.9, 0.1)
-    z_vals = exp(collect(mc.state_values))                                     ##  IMPORTANT:  nodes are the exponencial     ##
+    mc  = rouwenhorst(n_z, 0.9, 0.05)
+    ##  WARN:  nodes are the exponencial     ##
+    z_vals = exp(collect(mc.state_values))
     Π_z    = mc.p
+    #== Create Basis ==#
+    z_basis = Basis(BF1(), z_vals, 0, 1)
 
     #== Menu Cost ==#
     ξbar = 2.5
     H(ξ) = 1.0/( ξbar - 0.0 )*(ξ - 0.0)
     cond_mean(ξ) = 1/(2*ξbar) * (ξ.^2)
 
-    #== Create Basis ==#
-    n_p̃ = 30
-    z_basis = Basis(BF1(), z_vals, 0, 1)
+    # n_p̃ = 30
+    # p_low   = 0.5 / z_vals[end]
+    # p_high  = 1.1 * ϵ/(ϵ-1) * 0.5/ z_vals[1]
+    # ##  WARN:  nodes in p̃ are in logs  ##
+    # p̃_basis = Basis(BF2(), n_p̃, log( p_low ), log( p_high ) )
+    # mbasis::CollocStruct{BF1,BF2} = CollocStruct(z_basis, p̃_basis)
 
-    p_low   = 0.5 / z_vals[end]
-    p_high  = 1.1 * ϵ/(ϵ-1) * 0.5/ z_vals[1]
-    p̃_basis = Basis(BF2(), n_p̃, log( p_low ), log( p_high ) )
+    w_guess_high = 1.0;
+    w_guess_low  = 0.3;
+
+    n_p̃ = 30
+    p_low   = w_guess_low / z_vals[end]
+    p_high  = 1.1 * ϵ/(ϵ-1) * (w_guess_high/ z_vals[1])
+    ##  WARN:  nodes in p̃ are in logs  ##
+    p_grid = collect( linspace(log( p_low ),log( p_high ),n_p̃) )
+    p̃_basis = Basis(BF2(), p_grid, 0, 3)
     mbasis::CollocStruct{BF1,BF2} = CollocStruct(z_basis, p̃_basis)
+    n_p̃ = mbasis.n_p̃
+
+    #== init vals ==#
+    coeff = zeros(n_p̃*n_z,3);
+    ξstar = zeros(n_p̃*n_z);
+    pstar = zeros(n_z);
 
     FirmProblem{BF1,BF2}(β, ϵ, n_z, Π_z, z_vals,
                          ξbar, H, cond_mean,
-                         coeff, ξstar,pstar,
+                         coeff, ξstar, pstar,
                          mbasis)
 end
 
@@ -92,10 +115,16 @@ function Base.show(io::IO, fp::FirmProblem)
     show(io, fp.mbasis.basis)
 end
 
-function CollocStruct{BF1<:BasisFamily,BF2<:BasisFamily,BP1,BP2}(z_basis::CompEcon.Basis{1,BF1,BP1}, p̃_basis::CompEcon.Basis{1,BF2,BP2})
+function CollocStruct{BF1<:BasisFamily,BF2<:BasisFamily,BP1,BP2}(z_basis::BasisMatrices.Basis{1,BF1,BP1}, p̃_basis::BasisMatrices.Basis{1,BF2,BP2})
 
-    ##  IMPORTANT:  careful with construction     ##
-    basis = z_basis × p̃_basis
+    ##  WARN:  careful with construction     ##
+    ## [ z_1 p_1 ]
+    ## [ z_2 p_1 ]
+    ## [ z_3 p_1 ]
+    ## [ z_1 p_2 ]
+    ## [ z_2 p_2 ]
+    ## [ z_3 p_2 ]
+    basis = Basis(z_basis, p̃_basis)
 
     Φ_tensor = BasisStructure(basis,Tensor())
 
@@ -120,5 +149,5 @@ function CollocStruct{BF1<:BasisFamily,BF2<:BasisFamily,BP1,BP2}(z_basis::CompEc
     CollocStruct{BF1,BF2}(basis, z_basis, p̃_basis,
                          Φ_tensor, Φ, Φ_fac,
                          z_nodes, n_z, p̃_nodes, n_p̃, grid_nodes,
-                         zeros(n_z*n_p̃,3), zeros(n_z*n_p̃,1), ind_z_x_z, ind_z_x_p̃)
+                         ind_z_x_z, ind_z_x_p̃)
 end

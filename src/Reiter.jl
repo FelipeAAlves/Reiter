@@ -8,15 +8,15 @@ using Optim
 using FastGaussQuadrature
 
 export
-# Constructor
+## Constructor
     ConsumerProblem, StstHistogram,
-
-# xxxx
+## Euler Residual
     netintr, wagefunc,
-    eulerres!, eulerres_matlab!, stst_histogram_resid,
+    eulerres!, eulerres_matlab!,
+##
+    stst_histogram_resid, stst_density_resid,
 # xxxx
     test_jaco_interp!
-
 # xxxx
 
 
@@ -29,7 +29,14 @@ include("KrusellSmithJulia/steadystate.jl")
 include("KrusellSmithJulia/equil_histogram.jl")
 
 ### SDPricing
-# using CompEcon
+
+# TODO
+#  - add an function to do expectations of Value func
+#  - know now how to handle the foc - CHECK policyPerturb1dd! from Reiter
+#  - introduce the Type of Variables that holds stst value and dual number structure
+#  - 
+
+# using BasisMatrices
 # using QuantEcon
 # using NLsolve: nlsolve
 #
@@ -39,9 +46,9 @@ include("KrusellSmithJulia/equil_histogram.jl")
 # # xxxx
 #
 # ##### includes
-# include("SDPricing\\firm_problem.jl")
-# include("SDPricing\\solve_col.jl")
-# # include("SDPricing/firm_problem.jl")
-# # include("SDPricing/solve_col.jl")
+# # include("SDPricing\\firm_problem.jl")
+# # include("SDPricing\\solve_col.jl")
+# include("SDPricing/firm_problem.jl")
+# include("SDPricing/solve_col.jl")
 
 end # module

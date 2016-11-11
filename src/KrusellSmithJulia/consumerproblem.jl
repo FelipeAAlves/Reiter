@@ -98,7 +98,7 @@ function ConsumerProblem()
 
     # number of grid points for each shock:
     nSavingsPar    = 120;                      # policy function; default = 80-160
-    nAssetsFine    = 75;                      # finer grid     ; default = 75-100
+    nAssetsFine    = 200;                     # finer grid     ; default = 75-100
                                                 #       bigger values perform even worst during linearization
                                                 #       bc what changes is only the weigth bet adjancent points but not the POINT where I go
     # APPROXIMATION of density

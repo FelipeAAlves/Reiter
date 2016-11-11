@@ -57,29 +57,28 @@
 # [Φ_new*coeff funeval(coeff, basis, Snew)]
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+"""
+    Solve for the firm's policies
+"""
+function solve_firm_policy!(w::Float64, fp::FirmProblem)
 
-function solve_firm_policy(w::Float64, Y::Float64, fp::FirmProblem)
-
-    Φ_fac = fp.Φ_fac
-
-    n_z = fp.n_z
-    n_p̃ = fp.n_p̃
-    n_nodes = n_z*n_p̃
-
-    coeff = copy(fp.coeff)
-    ξstar = copy(fp.ξstar)
+    Φ = fp.mbasis.Φ
+    Φ_fac = fp.mbasis.Φ_fac
+    coeff = fp.coeff
     # .....................................................................................
-    tol = 1e-4
-    V    = fp.Φ * coeff
+
+    tol = 1e-6
+    V    = Φ * coeff
     Vnew = similar(V)
 
     ii = 1
-    while err < tol && ii <= 200
-        bellman_rhs!(Vnew, coeff, w, Y, fp)
+    err = 1.0
+    while err > tol && ii <= 10
 
-        coeff[:] = Φ_fac\Vnew
+        bellman_rhs!(Vnew, coeff, w, fp)
+        copy!(coeff,Φ_fac\Vnew)
 
-        err = abs( vec(V) - vec(Vnew) )
+        err = maxabs( vec(V) - vec(Vnew) )
         @printf("  value function iteration %d, distance %.4f \n", ii, err)
 
         #== Prepare NEXT iteration ==#
@@ -88,11 +87,12 @@ function solve_firm_policy(w::Float64, Y::Float64, fp::FirmProblem)
         ii += 1
     end
 
-    ξstar, pstar = get_policies(V, coeff, w, Y, fp)
+    pstar, ξstar  = get_policies(V, coeff, w, fp)
 
-    copy!(fp.coeff, coeff)
     copy!(fp.ξstar, ξstar)
-    copy!(fp.p̃star, p̃star)
+    copy!(fp.pstar, pstar)
+
+    return Void
 end
 
 """
@@ -101,16 +101,7 @@ coefficients.
 
 ## Arguments
 
-##### Basis Info
-   - `basis::CompEcon.Basis`    : basis structure
-   - `S`                        : collocation nodes (states + forecast consumption)
-   - `coeff`                    : coefficient on basis function
-
-##### Model
-   - `model`        : Instance of Economy
-
-## Returns
-Return depend on the inputs... The basic function returns RHS evaluated at the collocation nodes only...
+- `V`
 
 """
 function bellman_rhs!(V::Array{Float64,2}, coeff::Array{Float64,2}, w::Float64, fp::FirmProblem)
@@ -125,7 +116,6 @@ function bellman_rhs!(V::Array{Float64,2}, coeff::Array{Float64,2}, w::Float64, 
 
     z_vals   = fp.mbasis.z_nodes
     n_z      = length(z_vals)
-    grid_nodes = fp.mbasis.grid_nodes
 
     #== Indices ==#
     ind_z_x_z = fp.mbasis.ind_z_x_z
@@ -136,23 +126,25 @@ function bellman_rhs!(V::Array{Float64,2}, coeff::Array{Float64,2}, w::Float64, 
     H(ξ) = fp.H(ξ)
     cond_mean(ξ) = fp.cond_mean(ξ)
 
-    # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    # .....................................................................................
 
     #== FIND optimal p̃ in case of adjustment ==#
-    f!(p̃, rout) = foc_price_adjust!(rout, p̃, z_vals, w, cv, fp, p̃_basis, Φ_z, ind_z_x_z)
-    g!(p̃, Jout) = soc_price_adjust!(Jout, p̃, z_vals, w, cv, fp, p̃_basis, Φ_z, ind_z_x_z)
+    f!(p̃, rout) = foc_price_adjust!(rout, p̃, w, cv, fp, p̃_basis, Φ_z, ind_z_x_z)
+    g!(p̃, Jout) = soc_price_adjust!(Jout, p̃, w, cv, fp, p̃_basis, Φ_z, ind_z_x_z)
 
-    p̃fricless = log(fp.ϵ/(fp.ϵ-1.0) * w./z_vals) # log-price
+    p̃fricless = log( fp.ϵ/(fp.ϵ-1.0) * w./z_vals ) # log-price
     res = nlsolve(f!, g!, p̃fricless)
     if !res.f_converged
         @printf("  - Problem with foc - residuals: %.3e \n", res.residual_norm)
+        pstar = p̃fricless
+    else
+        pstar = res.zero
     end
 
-    p̃star = res.zero
 
-    #== Value function ==#
-    value_adjust!(V, p̃star, z_vals, w, cv, fp, p̃_basis, Φ_z, ind_z_x_z, ind_z_x_p̃)
-    value_nadjust!(V, grid_nodes, w, cv, fp, Φ)
+    #== Compute Value function ==#
+    value_adjust!(V, pstar, w, cv, fp, p̃_basis, Φ_z, ind_z_x_z, ind_z_x_p̃)
+    value_nadjust!(V, w, cv, fp, Φ)
 
     #== Adjust/nAdjust decision ==#
     ξstar = ( V[:,1] - V[:,2] ) / w
@@ -190,16 +182,19 @@ function get_policies(V::Array{Float64,2}, coeff::Array{Float64,2}, w::Float64, 
     # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
     #== FIND optimal p̃ in case of adjustment ==#
-    f!(p̃, resid) = foc_price_adjust!(resid, p̃, z_vals, w, cv, fp, p̃_basis, Φ_z, ind_z_x_z)
-    g!(p̃, J)     = soc_price_adjust!(J    , p̃, z_vals, w, cv, fp, p̃_basis, Φ_z, ind_z_x_z)
+    f!(p̃, resid) = foc_price_adjust!(resid, p̃, w, cv, fp, p̃_basis, Φ_z, ind_z_x_z)
+    g!(p̃, J)     = soc_price_adjust!(J    , p̃, w, cv, fp, p̃_basis, Φ_z, ind_z_x_z)
 
     p̃fricless = log(fp.ϵ/(fp.ϵ-1.0) * w./z_vals) # log-price
     res = nlsolve(f!, g!, p̃fricless)
-    if !res.f_converged
-        @printf("  - Problem with foc - residuals: %.3e \n", res.residual_norm)
-    end
-
     p̃star = res.zero
+    # if !res.f_converged
+    #     @printf("  - Problem with foc - residuals: %.3e \n", res.residual_norm)
+    #     p̃star = p̃fricless
+    # else
+    #     p̃star = res.zero
+    # end
+
 
     #== Adjust/nAdjust decision ==#
     ξstar = ( V[:,1] - V[:,2] ) / w
@@ -209,8 +204,10 @@ function get_policies(V::Array{Float64,2}, coeff::Array{Float64,2}, w::Float64, 
 end
 
 
-function foc_price_adjust!{T<:Real}(resid::Vector{T}, p̃::Vector{T}, z_vals, w, cv, fp, p̃_basis, Φ_z, ind_z_x_z)
+function foc_price_adjust!{T<:Real}(resid::Vector{T}, p̃::Vector{T}, w, cv, fp, p̃_basis, Φ_z, ind_z_x_z)
 
+    z_vals   = fp.mbasis.z_nodes
+    Π_z = fp.Π_z
     n_z = length(z_vals)
     # .....................................................................................
 
@@ -218,17 +215,19 @@ function foc_price_adjust!{T<:Real}(resid::Vector{T}, p̃::Vector{T}, z_vals, w,
     Φ = row_kron( Φ_p̃_deriv[ ind_z_x_z[:,2], :], Φ_z[ ind_z_x_z[:,1], :] )
     ∂v̂ = Φ * cv
 
-    E∂v̂ = row_kron( eye(n_z) , fp.Π_z ) * ∂v̂
+    E∂v̂ = row_kron( eye(n_z) , Π_z ) * ∂v̂
 
-    for iz =1:n_z
+    for iz = 1:n_z
         resid[iz] = exp( p̃[iz]) - fp.ϵ * ( exp(p̃[iz]) - w/z_vals[iz]) +
         fp.β * exp( (fp.ϵ) * p̃[iz]) * E∂v̂[iz]
     end
 
     return Void
 end
-function soc_price_adjust!{T<:Real}(J::Matrix{T}, p̃::Vector{T}, z_vals, w, cv, fp, p̃_basis, Φ_z, ind_z_x_z)
+function soc_price_adjust!{T<:Real}(J::Matrix{T}, p̃::Vector{T}, w, cv, fp, p̃_basis, Φ_z, ind_z_x_z)
 
+    z_vals   = fp.mbasis.z_nodes
+    Π_z = fp.Π_z
     n_z = length(z_vals)
     # .....................................................................................
 
@@ -240,8 +239,8 @@ function soc_price_adjust!{T<:Real}(J::Matrix{T}, p̃::Vector{T}, z_vals, w, cv,
     Φ = row_kron( Φ_p̃_deriv[ ind_z_x_z[:,2], :], Φ_z[ ind_z_x_z[:,1], :] )
     ∂²v̂ = Φ * cv
 
-    E∂v̂ = row_kron( eye(n_z) , fp.Π_z ) * ∂v̂
-    E∂²v̂ = row_kron( eye(n_z) , fp.Π_z ) * ∂²v̂
+    E∂v̂ = row_kron( eye(n_z) , Π_z ) * ∂v̂
+    E∂²v̂ = row_kron( eye(n_z) , Π_z ) * ∂²v̂
     # .....................................................................................
 
     fill!(J,zero(T))
@@ -268,38 +267,45 @@ end
 #     return exp(-fp.ϵ * p̃) * Y - fp.ϵ * ( exp(p̃) - w/z_vals ) * exp( -(fp.ϵ + 1.0) * p̃) * Y + fp.β * E∂v̂
 # end
 
-function value_adjust!(V::Array{Float64,2}, p̃::Vector{Float64}, z_vals, w, cv, fp::FirmProblem, p̃_basis, Φ_z, ind_z_x_z, ind_z_x_p̃)
+function value_adjust!(V::Array{Float64,2}, p̃::Vector{Float64}, w, cv, fp::FirmProblem, p̃_basis, Φ_z, ind_z_x_z, ind_z_x_p̃)
+
+    z_vals   = fp.mbasis.z_nodes
+    Π_z = fp.Π_z
+    n_z = length(z_vals)
+    # .....................................................................................
 
     Φ_p̃ = BasisStructure( p̃_basis, Direct(), p̃, 0).vals[1]
     Φ   = row_kron( Φ_p̃[ ind_z_x_z[:,2], :] , Φ_z[ ind_z_x_z[:,1], :] )
 
     #== Find the expected continuation value ==#
     v̂ = Φ * cv
-    Ev̂ = row_kron( eye(size(fp.Π_z,1)), fp.Π_z ) * v̂
+    Ev̂ = row_kron( eye(n_z), Π_z ) * v̂
 
     val_adjust = profit(p̃, z_vals, w, fp) + fp.β * Ev̂
 
     V[:,1] = val_adjust[ind_z_x_p̃[:,1]]
 end
 
-function value_nadjust!(V, grid_nodes, w, cv, fp::FirmProblem, Φ)
+function value_nadjust!(V, w, cv, fp::FirmProblem, Φ)
 
-    n_z = size(fp.Π_z,1)
-    n_p̃ = div(size(grid_nodes,1), n_z)
+    Π_z = fp.Π_z
+    grid_nodes = fp.mbasis.grid_nodes
+    n_p̃ = fp.mbasis.n_p̃
+    # .....................................................................................
 
     #== Find the continuation expected value ==#
     v̂ = Φ * cv
-    Ev̂ = kron( eye(n_p̃) , fp.Π_z ) * v̂
+    Ev̂ = kron( eye(n_p̃) , Π_z ) * v̂
 
     z_vals = grid_nodes[:,1]
     p̃m1    = grid_nodes[:,2]
 
-    val_nadjust = profit(p̃m1, z_vals, w, fp) + fp.β * Ev̂
+    V[:,2] = profit(p̃m1, z_vals, w, fp) + fp.β * Ev̂
 
-    V[:,2] = val_nadjust
+    return Void
 end
 
-function profit(p̃, z_vals, w, Y, fp)
+function profit(p̃, z_vals, w, fp)
 
     return ( exp(p̃) - w./ z_vals ) .* ( exp( -fp.ϵ * p̃)  )
 end

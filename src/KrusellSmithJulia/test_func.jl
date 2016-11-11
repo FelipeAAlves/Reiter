@@ -3,10 +3,8 @@
 #   TESTING policies
 #
 # ======================================================================================
-using NLsolve
-using Roots
-using ForwardDiff
-
+# using NLsolve, Roots
+#
 # #== Initialize Objects ==#
 # Cons         = Reiter.ConsumerProblem();
 # ss_histogram = Reiter.StstHistogram(Cons);
@@ -32,10 +30,10 @@ using ForwardDiff
 # # @time nlsolve(f!, Cons.Θinit)
 # @time nlsolve(f!, Cons.Θinit, autodiff = true)
 # @time nlsolve(g!, Cons.Θinit, autodiff = true)
-#
+# #
 # res1 = nlsolve(f!, Cons.Θinit, autodiff = true)
 # res2 = nlsolve(g!, Cons.Θinit, autodiff = true)
-# copy!(Cons.Θinit, res2.zero);
+# # copy!(Cons.Θinit, res2.zero);
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -88,12 +86,20 @@ using ForwardDiff
 # **************************************************************************************
 #   TEST Histogram SteadyState
 # ======================================================================================
-
+using Roots
 #== Initialize Objects ==#
 Cons         = Reiter.ConsumerProblem();
 ss_histogram = Reiter.StstHistogram(Cons);
 
 f_hist(k) = Reiter.stst_histogram_resid(Cons, k)
+
+#== ProfileView ==#
+# f_hist(1.01*Cons.KrepSS)
+# Profile.clear()
+# @profile f_hist(1.01*Cons.KrepSS)
+# using ProfileView
+# ProfileView.view()
+
 Kss = fzero(f_hist, 1.01*Cons.KrepSS, 1.05*Cons.KrepSS)
 
 #== UPDATE ss_histogram ==#
@@ -186,7 +192,7 @@ using QuantEcon
 
 f(Y) = Reiter.equil_histogram(Y, iYvar, ss_histogram, Cons)
 Jout = zeros( length(equil_res), length(Yss) );
-ForwardDiff.jacobian!(Jout, f, Yss);
+@time ForwardDiff.jacobian!(Jout, f, Yss);
 # @time ForwardDiff.jacobian!(Jout, f, Yss,Chunk{10}());
 # @time ForwardDiff.jacobian!(Jout, f, Yss,Chunk{5}()) ;
 # @time ForwardDiff.jacobian!(Jout, f, Yss,Chunk{2}()) ;
@@ -194,16 +200,16 @@ ForwardDiff.jacobian!(Jout, f, Yss);
 #== Gensys matrices ==#
 Γ0 = -Jout[:, iYvar[:X]]    ;
 Γ1 =  Jout[:, iYvar[:Xlag]] ;
-c  =  zeros( size(Jout,1) ) ;
 Π  =  Jout[:, iYvar[:eta]]  ;
-Ψ  =  Jout[:, iYvar[:eps]]; Ψ = reshape(Ψ, length(Ψ), 1 ) ;
+Ψ  =  Jout[:, iYvar[:eps]]  ;
+c  =  zeros( size(Jout,1) ) ;
 
 #== CALL Gensys ==#
 # ```
 # Γ0*y(t) = Γ1*y(t-1) + c + Ψ*z(t) + Π*η(t),
 # ```
 println("STEP [3]: Solving the model")
-Phi, cons, B, _, _, _, _, eu, _ = gensysdt(Γ0, Γ1, c, Ψ, Π, 1.0 + 1e-10);
+@time Phi, cons, B, _, _, _, _, eu, _ = gensysdt(Γ0, Γ1, c, Ψ, Π, 1.0 + 1e-10);
 if !((eu[1] == 1) & (eu[2] == 1))
     throw(error("Gensys does not give existence"))
 end
@@ -307,7 +313,7 @@ psim1 = plot(asset_grid_fine, y_vals, linewidth=2, alpha=0.6, xlim=[0.0, 0.5*ass
 psim2 = bar(Cons.asset_grid_fine, [Histogram_simul[:,1] Histogram_simul[:,ind[1]] Histogram_simul[:,ind[2]]], alpha=0.6);
 
 # commands to plot
-plot(psim1)
-plot(psim2)
-plot(p_hist_x_dens)
+# plot(psim1)
+# plot(psim2)
+# plot(p_hist_x_dens)
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

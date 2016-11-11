@@ -18,7 +18,8 @@ function stst_histogram_resid(cp::ConsumerProblem, K::Real, ss_histogram::Union{
     #=======================================================#
     @printf("   - Inner loop (Policy) \n")
     f!(Θ, fvec) = eulerres2!(fvec, Θ, Θ, R, R, wage, wage, cp)
-    @time res = nlsolve(f!, cp.Θinit, autodiff = true)
+    res = nlsolve(f!, cp.Θinit, autodiff = true)
+    @printf("   - Policy converged to %.2e \n", res.residual_norm)
 
     #== Save and reshape solution ==#
     copy!(cp.Θinit, res.zero)
@@ -32,7 +33,7 @@ function stst_histogram_resid(cp::ConsumerProblem, K::Real, ss_histogram::Union{
     Πaggr = forward_mat(cp, mΘ)
 
     #== Invariant distribution ==#
-    @time _, eigenv = eigs(Πaggr, nev = 1,which=:LM);
+    _, eigenv = eigs(Πaggr, nev = 1,which=:LM);
     eigenv = real( squeeze(eigenv,2) )
     vHistogram = eigenv ./ sum(eigenv);
 
