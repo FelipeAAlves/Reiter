@@ -5,8 +5,8 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \documentclass[a4paper,10pt]{article}  %scrartcl
 
-% \input{C:/Users/falves/Dropbox/TexFolder/preamble.tex} 
-\input{/Users/felipealves/Dropbox/TexFolder/preamble.tex}
+\input{C:/Users/falves/Dropbox/TexFolder/preamble.tex} 
+% \input{/Users/felipealves/Dropbox/TexFolder/preamble.tex}
 
 \title{ Example State-Dependent Pricing 2 \vspace{-5em}} % use 5
 % {
@@ -246,6 +246,24 @@ Compute Steady State
 % SECTION MODEL (END)
 %..............................................................................................................
 
+
+%%%%%%% Perturbing the value Function  
+%--------------------------------------------------------------------------------------------------------------------------
+\subsection{Perturbing the value Function} % (fold)
+\label{sub:perturbing_the_value_function}
+
+%%%
+\begin{equation}
+   \label{eq:interpol}
+   \text{itp} \Big[ V_{E,t}^*, V_{E}^{*} \Big]( \tilde{x} ) = V_{E}^*( \tilde{x} ) + 
+      \frac{ \tilde{x} - \bar{x}_i }{ \bar{x}_{i+1} - \bar{x}_i } \Big( V_{E,t}[i+1] - V_{E,t}^{*}(\bar{x}_{i+1}) \Big) +
+      \frac{ \bar{x}_{i+1} -\tilde{x} }{ \bar{x}_{i+1} - \bar{x}_i } \Big( V_{E,t}[i] - V_{E,t}^{*}(\bar{x}_i) \Big)
+\end{equation}
+%%%
+
+% Subsection perturbing_the_value_function (end)
+%..........................................................................................................................
+
 %%%%%%% How to do the perturbation of policy  
 %--------------------------------------------------------------------------------------------------------------------------
 \subsection{How to do the perturbation of policy} % (fold)
@@ -256,15 +274,6 @@ Policy outside steady state must satisfy
 \begin{equation}
    \label{eq:maximization_prob}
    x'(z,x; X_t ) = \argmax_{x'} \bigg\{ U(z,x,x'; X_t) + \beta \  \text{itp} \Big[ V_{E,t} , V_{E}^* \Big]( x' ) \bigg\}
-\end{equation}
-%%%
-where
-%%%
-\begin{equation}
-   \label{eq:interpol}
-   \text{itp} \Big[ V_{E,t}^*, V_{E}^{*} \Big]( \tilde{x} ) = V_{E}^*( \tilde{x} ) + 
-      \frac{ \tilde{x} - \bar{x}_i }{ \bar{x}_{i+1} - \bar{x}_i } \Big( V_{E,t}[i+1] - V_{E,t}^{*}(\bar{x}_{i+1}) \Big) +
-      \frac{ \bar{x}_{i+1} -\tilde{x} }{ \bar{x}_{i+1} - \bar{x}_i } \Big( V_{E,t}[i] - V_{E,t}^{*}(\bar{x}_i) \Big)
 \end{equation}
 %%%
 so that in steady state the whole expression reduces to simply $ V^*( \tilde{x} ) $.

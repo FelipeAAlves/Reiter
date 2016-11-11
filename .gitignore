@@ -3,10 +3,10 @@
 !OUTPUT/.gitkeep
 
 ### Latex
+!*.tex
 *.aux
 *.bbl
 *.log
-!*.tex
 *.fdb_latexmk
 *.fls
 *.out
