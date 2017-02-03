@@ -1,0 +1,1 @@
+   Base.sin(d::Dual) = Dual(sin(value(d)), cos(value(d)) * partials(d))

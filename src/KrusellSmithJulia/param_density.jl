@@ -4,7 +4,7 @@
 """
 Evals g_ϵ ( a; 1, ρ ), where
 
-    g_ϵ(a; 1, ρ) = exp ( ρ¹(a-m¹) + ∑ ρⁱ [ (a-m¹)ⁱ - mⁱ] )
+    g_ϵ(a; 1, ρ) = exp \{ ρ¹(a-m¹) + ∑ ρⁱ [ (a-m¹)ⁱ - mⁱ] \}
 
 #### Return
 
@@ -25,7 +25,18 @@ function density{T<:Real}(ρ::Vector{T}, moments::Vector{T}, asset_points::Vecto
 end
 
 """
-Return the ∫ g_ϵ ( a; 1, ρ )
+Returns the value of
+        ∫ g_ϵ ( a; 1, ρ ) * (a - m)ⁱ da
+where
+    g_ϵ(a; 1, ρ) = exp \{ ρ¹(a-m¹) + ∑ ρⁱ [ (a-m¹)ⁱ - mⁱ] \}
+
+### INPUT
+    - `ρ`                   : parameters of the distribution
+    - `moments`
+    - `cp::ConsumerProblem`
+    - `iMom`                :
+
+NOTE : for `iMom`=0 it just evaluates the density.
 """
 function density_int{T<:Real}(ρ::Vector{T}, moments::Vector{T}, cp::ConsumerProblem, iMom::Int64 = 0, g0::Float64 = 1.0)
 

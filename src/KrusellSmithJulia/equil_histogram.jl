@@ -3,7 +3,7 @@
 Holds all equilibrium conditions. Used to do the linearization Step
 
 ### INPUT
-- `Y`       : [X_t, X_{t-1}, η_t, ϵ_{t-1}]
+- `Y`       : [X_t, X_{t-1}, η_t, ϵ_{t}]
               Variable X at t, t-1, expectational shocks ans regular shocks
               where X = [vHistogramDev; Kaggr; dx; vSavingsPar]
 - `iVarY`   : index
@@ -12,10 +12,10 @@ Holds all equilibrium conditions. Used to do the linearization Step
 function equil_histogram{T<:Real}(Y::Vector{T}, iVarY::Dict, ss::StstHistogram, cp::ConsumerProblem)
 
     #== Extract variables ==#
-    X     = Y[ iVarY[:X]    ]
-    Xlag  = Y[ iVarY[:Xlag] ]
-    eta   = Y[ iVarY[:eta]  ]
-    eps   = Y[ iVarY[:eps]  ]
+    X::Vector{T}     = Y[ iVarY[:X]    ]
+    Xlag::Vector{T}  = Y[ iVarY[:Xlag] ]
+    eta::Vector{T}   = Y[ iVarY[:eta]  ]
+    eps::Vector{T}   = Y[ iVarY[:eps]  ]
 
     #== Create fnc to unpack ==#
     vHistogram, Θ, dz, KAggr             = unpack_histogram(X,ss)
@@ -33,20 +33,20 @@ function equil_histogram{T<:Real}(Y::Vector{T}, iVarY::Dict, ss::StstHistogram, 
     # ==================================================================
 
 
-    # Dynamics of distribution of wealth
+    ## Equation Dynamics of distribution of wealth ##
     Πaggr = forward_mat(cp, Θlag)
 
     vHistogram_lom = Πaggr * vHistogramlag
 
     resD = distr2x(vHistogram_lom, ss.vHistogram) - distr2x(vHistogram, ss.vHistogram)
 
-    # Exogenoous Shocks
+    ## Equation Exogenoous Shocks ##
     resZ = dz - ρz * dzlag - σz * eps
 
-    # Aggregate Capital
+    ## Equation Aggregate Capital  ##
     resK = KAggr - expect_k(vHistogram, cp);
 
-    # Household policy rules
+    ## Equation Household policy rules  ##
     resC = eulerres( Θlag, Θ, Rlag, R, wagelag, wage, cp) + eta
 
 

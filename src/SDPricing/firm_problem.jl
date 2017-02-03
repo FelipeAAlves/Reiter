@@ -6,7 +6,7 @@
 - `basis`   :
 
 - `z_basis` :
-- `p̃_basis` :
+- `p_basis` :
 
 - `Φ_tensor`  :
 - `Φ`         :
@@ -14,140 +14,165 @@
 
 
 """
-type CollocStruct{BF1<:BasisFamily,BF2<:BasisFamily}
+immutable FirmColloc{BF<:BasisFamily,BP<:BasisParams}
 
+    ##  Basis Information  ##
+    p_basis::BasisMatrices.Basis{1,BF,BP}
+    z_basis::BasisMatrices.Basis{1,BasisMatrices.Spline,BasisMatrices.SplineParams}
     basis::BasisMatrices.Basis{2}
-    z_basis::BasisMatrices.Basis{1,BF1}
-    p̃_basis::BasisMatrices.Basis{1,BF2}
 
-    Φ_tensor::BasisMatrices.BasisStructure{BasisMatrices.Tensor}
-    Φ::Array{Float64,2}
+    Φ::Union{SparseMatrixCSC{Float64,Int64},Array{Float64,2}}
+    Φ_tensor::BasisMatrices.BasisMatrix{BasisMatrices.Tensor}
     Φ_fac::Union{Base.SparseArrays.UMFPACK.UmfpackLU{Float64,Int64},Base.LinAlg.LU{Float64,Array{Float64,2}}}
 
     ##  Nodes INFO  ##
-    z_nodes::Vector{Float64}
-    n_z::Int64
-    p̃_nodes::Vector{Float64}
-    n_p̃::Int64
+    p_nodes::Vector{Float64}
+    n_coll_p::Int64
+    z_nodes::Vector{Int64}
+    n_coll_z::Int64
     grid_nodes::Array{Float64,2}
-    ##  Useful indices ##
-    ind_z_x_z::Array{Int64,2}
-    ind_z_x_p̃::Array{Int64,2}
+
 end
 
-immutable FirmProblem{BF1<:BasisFamily,BF2<:BasisFamily}
-    # Parameters
-    β::Float64
-    ϵ::Float64
-
-    ##  Stochastic Process  ##
-    n_z::Int64
-    Π_z::Matrix{Float64}
-    z_vals::Vector{Float64}
-
-    ##  Menu Cost  ##
-    ξbar::Float64
-    H::Function
-    cond_mean::Function
-
-    ##  Policies  ##
-    coeff::Array{Float64,2}
-    ξstar::Vector{Float64}
-    pstar::Vector{Float64}
-
-    ##  Basis Object  ##
-    mbasis::CollocStruct{BF1,BF2}
-end
-
-function FirmProblem{BF1<:BasisFamily,BF2<:BasisFamily}(::Type{BF1}, ::Type{BF2}, β = 0.2, ϵ = 5.0)
-
-    #== Stochastic productivity ==#
-    n_z = 10
-    mc  = rouwenhorst(n_z, 0.9, 0.05)
-    ##  WARN:  nodes are the exponencial     ##
-    z_vals = exp(collect(mc.state_values))
-    Π_z    = mc.p
-    #== Create Basis ==#
-    z_basis = Basis(BF1(), z_vals, 0, 1)
-
-    #== Menu Cost ==#
-    ξbar = 2.5
-    H(ξ) = 1.0/( ξbar - 0.0 )*(ξ - 0.0)
-    cond_mean(ξ) = 1/(2*ξbar) * (ξ.^2)
-
-    # n_p̃ = 30
-    # p_low   = 0.5 / z_vals[end]
-    # p_high  = 1.1 * ϵ/(ϵ-1) * 0.5/ z_vals[1]
-    # ##  WARN:  nodes in p̃ are in logs  ##
-    # p̃_basis = Basis(BF2(), n_p̃, log( p_low ), log( p_high ) )
-    # mbasis::CollocStruct{BF1,BF2} = CollocStruct(z_basis, p̃_basis)
-
-    w_guess_high = 1.0;
-    w_guess_low  = 0.3;
-
-    n_p̃ = 30
-    p_low   = w_guess_low / z_vals[end]
-    p_high  = 1.1 * ϵ/(ϵ-1) * (w_guess_high/ z_vals[1])
-    ##  WARN:  nodes in p̃ are in logs  ##
-    p_grid = collect( linspace(log( p_low ),log( p_high ),n_p̃) )
-    p̃_basis = Basis(BF2(), p_grid, 0, 3)
-    mbasis::CollocStruct{BF1,BF2} = CollocStruct(z_basis, p̃_basis)
-    n_p̃ = mbasis.n_p̃
-
-    #== init vals ==#
-    coeff = zeros(n_p̃*n_z,3);
-    ξstar = zeros(n_p̃*n_z);
-    pstar = zeros(n_z);
-
-    FirmProblem{BF1,BF2}(β, ϵ, n_z, Π_z, z_vals,
-                         ξbar, H, cond_mean,
-                         coeff, ξstar, pstar,
-                         mbasis)
-end
-
-function Base.show(io::IO, fp::FirmProblem)
+function Base.show{BF1,BF2}(io::IO, fcoll::FirmColloc{BF1, BF2})
 
     m = """
-    FirmProblem
+    FirmColloc{$BF1,$BF2}
 
     """
     print(io, m)
-    show(io, fp.mbasis.basis)
+    show(io, fcoll.basis)
 end
 
-function CollocStruct{BF1<:BasisFamily,BF2<:BasisFamily,BP1,BP2}(z_basis::BasisMatrices.Basis{1,BF1,BP1}, p̃_basis::BasisMatrices.Basis{1,BF2,BP2})
+function FirmColloc{BF<:BasisFamily}(::Type{BF})
 
-    ##  WARN:  careful with construction     ##
-    ## [ z_1 p_1 ]
-    ## [ z_2 p_1 ]
-    ## [ z_3 p_1 ]
-    ## [ z_1 p_2 ]
-    ## [ z_2 p_2 ]
-    ## [ z_3 p_2 ]
-    basis = Basis(z_basis, p̃_basis)
+    ##  WARN:  CARAFUL with construction     ##
+    ## [ p_1 z_1]
+    ## [ p_2 z_1]
+    ## [ p_3 z_1]
+    ## [ p_1 z_2]
+    ## [ p_2 z_2]
+    ## [ p_3 z_2]
+    @getPar __pars
+    println(β)
 
-    Φ_tensor = BasisStructure(basis,Tensor())
+    #== Collocation Grids ==#
+    n_p = 30
+    w_guess_high = 1.75;
+    w_guess_low  = 0.5;
+    p_low   = w_guess_low / z_vals[end]
+    p_high  = 1.1 * ϵ/(ϵ-1) * (w_guess_high/ z_vals[1])
+    p_grid = collect( linspace(log( p_low ),log( p_high ),n_p) )
 
-    Φ_direct = BasisStructure(basis,Direct())
+    ##  WARN WARN:  nodes in p̃ are in logs  ##
+    p_basis = Basis(BF(), p_grid, 0, 3) # using cubic spline
+    z_basis = Basis(Spline(), z_vals, 0, 1)
+    basis   = Basis(p_basis, z_basis)
+    # .....................................................................................
+
+    #== Useul objects ==#
+    Φ_tensor = BasisMatrix(basis, Tensor())
+    Φ_direct = BasisMatrix(basis, Direct())
     Φ        = convert(Expanded, Φ_direct).vals[1]
     Φ_fac    = factorize(Φ)
 
     #== GRIDS that I will use in the solution ==#
-    z_nodes = nodes(z_basis)[1]
-    p̃_nodes = nodes(p̃_basis)[1]
-    grid_nodes = gridmake(z_nodes, p̃_nodes)
+    p_nodes = nodes(p_basis)[1]
+    z_nodes = collect(1:length(z_vals))
+    grid_nodes = gridmake(p_nodes, z_nodes)
 
-    n_z    = length(z_nodes)
-    n_p̃    = length(p̃_nodes)
+    n_coll_p    = length(p_nodes)
+    n_coll_z    = length(z_nodes)
 
-    raw_ind = [collect(1:n) for n in (n_z, n_z)]
-    ind_z_x_z = gridmake(raw_ind...)
+    FirmColloc(p_basis, z_basis, basis,
+    Φ, Φ_tensor, Φ_fac,
+    p_nodes, n_coll_p, z_nodes, n_coll_z, grid_nodes)
+end
 
-    raw_ind = [collect(1:n) for n in (n_z, n_p̃)]
-    ind_z_x_p̃ = gridmake(raw_ind...)
+immutable FirmSolution
+    ##  STEADY-STATE solutions  ##
+    coeff::Array{Float64,2}
+    pstar::Vector{Float64}
+    ξstar::Vector{Float64}
 
-    CollocStruct{BF1,BF2}(basis, z_basis, p̃_basis,
-                         Φ_tensor, Φ, Φ_fac,
-                         z_nodes, n_z, p̃_nodes, n_p̃, grid_nodes,
-                         ind_z_x_z, ind_z_x_p̃)
+    ##  Solutions at other points  ##
+    pol_at::Array{Tuple{Vector{Float64},Vector{Float64},Vector{Float64}},1} # DEPRECATED
+
+end
+
+function FirmSolution(fcoll::FirmColloc)
+
+    FirmSolution( zeros(Float64, fcoll.n_coll_p*fcoll.n_coll_z, 3),
+                  zeros(fcoll.n_coll_z), zeros(length(fcoll.z_basis)*length(fcoll.p_basis)),
+                  Array(Tuple{Vector{Float64},Vector{Float64},Vector{Float64}},0) )
+
+end
+
+
+"""
+Holds information on the steady-state
+
+"""
+# Observation: Let it be type to facilitate update in steady-state fnc
+type StstHistogram
+
+    ## Grid ##
+    p_hist_nodes::Vector{Float64}
+    z_hist_nodes::Vector{Int64}
+    hist_nodes::Matrix{Float64}
+
+    ##  Distribution ##
+    vHistogram::Vector{Float64}
+    mHistogram::Matrix{Float64}
+
+    ##  All Ss values and Dictionary  ##
+    xstst::Vector{Float64}
+    ystst::Vector{Float64}
+    ixvar::Dict{Symbol,UnitRange{Int64}}
+    iyvar::Dict{Symbol,UnitRange{Int64}}
+
+    ##  Auxiliary  ##
+    χ::Float64
+end
+
+
+function StstHistogram(fcoll::FirmColloc)
+
+    @getPar __pars
+
+    p_nodes  = fcoll.p_nodes
+    n_coll_p = fcoll.n_coll_p
+
+    #== Grids ==#
+    p_hist_nodes = linspace( p_nodes[1],p_nodes[end], 3*n_coll_p)
+    z_hist_nodes = 1:length(z_vals)
+    hist_nodes = gridmake(p_hist_nodes, z_hist_nodes)
+
+    nHistogram = length(p_hist_nodes) * n_z
+    vHistogram = zeros(nHistogram)
+    mHistogram = zeros(length(p_hist_nodes), n_z)
+
+    ###  Create the Dicitionary IMPORTANT ###
+    # *************************************************************************************
+    ixvar = Dict{Symbol,UnitRange{Int64}}()
+    iyvar = Dict{Symbol,UnitRange{Int64}}()
+
+    ##  CASE:  State variables  ##
+    nx = 0
+    # ixvar[:endo_aggr]  = nn:5;                                 nn += 5;
+    ixvar[:histogram] = nx+1:nx+(nHistogram-1);   nx += (nHistogram-1)
+    ixvar[:exog_aggr] = nx+1:nx+2;                nx += 2;              # [Z_t, ϵ_i]
+
+    ##  CASE:  controls  ##
+    ny = 0
+    iyvar[:aggr]      = ny+1:5;                            ny += 5;   # [Y_t, N_t, i_t, Π_t, w_t]
+    iyvar[:value_fnc] = ny+1:ny+(n_coll_p*n_z);            ny += (n_coll_p*n_z)
+    iyvar[:foc]       = ny+1:ny+(n_z);                     ny += (n_z)
+    # -------------------------------------------------------------------------------------
+
+    StstHistogram(p_hist_nodes, z_hist_nodes, hist_nodes, vHistogram, mHistogram, Array(Float64,nx), Array(Float64,ny), ixvar, iyvar, 0.0)
+end
+
+function BasisMatrices.nodes(ss_histogram::StstHistogram)
+    return ss_histogram.hist_nodes, (ss_histogram.p_hist_nodes, ss_histogram.z_hist_nodes)
 end

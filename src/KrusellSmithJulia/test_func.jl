@@ -167,6 +167,13 @@ nEta = Cons.nSavingsPar * Cons.nEps
 nExog = 1
 
 #== CREATE Y ==#
+
+#=============================================#
+###   CONSTRUCT iZvar for use in res_equi   ###
+#=============================================#
+iZvar = Dict{Symbol, UnitRange{Int64}}()
+
+
 # X = [vHistogramDev; Kaggr; dx; vSavingsPar]
 Xss = [ zeros(length(ss_histogram.vHistogram)-1); 0.0; ss_histogram.Kaggr; ss_histogram.mΘ[:] ];
 Yss = [ Xss; Xss; zeros(nEta); zeros(nExog) ];

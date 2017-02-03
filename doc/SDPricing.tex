@@ -4,11 +4,16 @@
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \documentclass[a4paper,10pt]{article}  %scrartcl
+\usepackage{preview}
 
 \input{C:/Users/falves/Dropbox/TexFolder/preamble.tex} 
 % \input{/Users/felipealves/Dropbox/TexFolder/preamble.tex}
 
-\title{ Example State-Dependent Pricing 2 \vspace{-5em}} % use 5
+%%% EXTRA Packages
+\usepackage{empheq}
+\newcommand{\minus}[1]{{#1}^{-}}
+\newcommand{\plus}[1]{{#1}^{+}}
+\title{ Example State-Dependent Pricing \vspace{-1.25em}} % use 5
 % {
 %         \vspace{-0in}  
 %         \usefont{OT1}{bch}{b}{n}
@@ -17,11 +22,11 @@
 %         \huge Referee report on ``Learning, Confidence, and Business Cycles''  \[-0.5cm]
 %         \horrule{2pt} \[-0.5cm]
 % }
-% \author{
-%         \normalfont \normalsize Felipe Alves \\[-3pt]       \normalsize
-%         \today
-% }
-\date{ \vspace{-0em} }
+\author{
+        \normalfont \normalsize Felipe Alves \\[-3pt]       \normalsize
+        \today
+}
+\date{ \vspace{-3em} }
 
 % *************************************************************************************************************
 % ************************************************                ********************************************* 
@@ -42,7 +47,7 @@
    \item Some comment
 
 \end{itemize}
-%%%
+ %%%
 % SECTION INTODUCTION (END)
 %..........................................................................................................................
 %**************************************************************************************************************
@@ -50,6 +55,7 @@
 %--------------------------------------------------------------------------------------------------------------
 \section{Model} % (fold)
 \label{sec:model}
+
 %%%
 \begin{itemize}
    %% 
@@ -74,17 +80,18 @@
    %%%
    \begin{equation}
       \label{eq:model_eq3}
-      \Pi_t(h) = p_t(h) y_t(h) - W_t \ell_t(h) - \xi_t(h) \mathbbm{1}\{p_t(h) \ne p_{t-1}(h)\}
+      \Pi_t(h) = p_t(h) y_t(h) - W_t \ell_t(h) - \xi_t(h) W_t \mathbbm{1}\{p_t(h) \ne p_{t-1}(h)\}
    \end{equation}
    %%%
    %%
+   
    \item Value function for the firm
    \begin{multline}
       V_t \left( a_t(h), \frac{ p_{t-1}(h) }{ P_t }, \xi_t; \ \cdot \ \right) = 
       \max_{p} 
       \Bigg\{
-         \Pi^R \left( a_t(h), \frac{ p_{t-1}(h) }{ P_t }, \cdot \right) 
-         -\mathbbm{1} \{p \ne p_{t-1}(h ) \} \xi + \\
+         \Pi^R \left( a_t(h), \frac{ p }{ P_t }, \cdot \right) 
+         -\mathbbm{1} \{p \ne p_{t-1}(h ) \} \xi w + \\
          %%
          + \mathbb{E}_t \bigg[ D^R_{t,t+1} V_{t+1} \left( a_{t+1}(h), \frac{ p }{ P_{t+1} }, \xi_{t+1}, \cdot \right) \bigg] \Bigg\}
    \end{multline}
@@ -102,7 +109,7 @@
    %% 
    \item Rewriting the problem
    \[
-      v(a, \tilde{p}_{-1}; \ \cdot \ ) = \int_{\xi} \max \Big\{ V^A(a,\tilde{p}_{-1}; \ \cdot \ ) - \xi w(\cdot) , \ V^N(a,\tilde{p}_{-1} ; \ \cdot \ )  \Big\} dH(\xi )
+      v(a, x; \ \cdot \ ) = \int_{\xi} \max \Big\{ V^A(a,x; \ \cdot \ ) - \xi w(\cdot) , \ V^N(a,x ; \ \cdot \ )  \Big\} dH(\xi )
    \]
    where
    %%%
@@ -110,22 +117,22 @@
       \label{eq:model_eq4}
       %%%
       \begin{split}
-      V^A(a, \tilde{p}_{-1}; \ \cdot \ ) & = \max_{\tilde{p}} 
+      V^A(a, x; \ \cdot \ ) & = \max_{\tilde{p}} 
          \Bigg\{ 
             \Pi^R \left( a, \tilde{p}, \cdot \right) + 
             \mathbb{E} \bigg[ D^R(\cdot,\cdot) v\Big( a,\tilde{p} \pi_{t+1}^{-1} ; \ \cdot \ \Big) \bigg]
          \Bigg\} \\
       %%
-      V^N(a, \tilde{p}_{-1}; \ \cdot \ ) & = 
-          \Pi^R \left( a, \tilde{p}_{-1}, \cdot \right) + \mathbb{E}
+      V^N(a, x; \ \cdot \ ) & = 
+          \Pi^R \left( a, x, \cdot \right) + \mathbb{E}
           \Big[ 
-               D^R(\cdot,\cdot) v\Big( a', \tilde{p}_{-1}\pi_{t+1}^{-1} ; \ \cdot \  \Big)
+               D^R(\cdot,\cdot) v\Big( a', x\pi_{t+1}^{-1} ; \ \cdot \  \Big)
           \Big]
       \end{split}
    \end{equation}
    %%%
    The firm will choose to pay the fixed cost iff $ V^A -\xi \ge V^N $. Hence, for 
-   each individual state $ a, \tilde{p}_{-1} $ there is a unique threshold which makes the firm 
+   each individual state $ a, x $ there is a unique threshold which makes the firm 
    indifferent between these two options
    \[
       \tilde{\xi}(a, \tilde{p} ; ) = \frac{V^A(a, \tilde{p} ) - V^N( a, \tilde{p})}{w}
@@ -134,12 +141,12 @@
    %% 
    \item The firm value function $V$ is therefore given by
    \begin{equation}
-      v(a, \tilde{p}_{-1}; \ \cdot \ ) = 
-         \int_0^{ \xi(a,\tilde{p}_{-1} ) } 
+      v(a, x; \ \cdot \ ) = 
+         \int_0^{ \tilde{\xi}(a,x ) } 
          \Big[ 
-            V^A(a, \tilde{p}_{-1} ; \ \cdot \ ) - \xi w(\cdot) 
+            V^A(a, x ; \ \cdot \ ) - \xi w(\cdot) 
          \Big]d\xi  
-         + \Big[  1 - H\Big( \tilde{\xi}(a, \tilde{p}_{-1} ; ) \Big) \Big] V^N(a,\tilde{p}_{-1} ; \ \cdot \ )
+         + \Big[  1 - H\Big( \tilde{\xi}(a, x ; ) \Big) \Big] V^N(a,x ; \ \cdot \ )
    \end{equation}
 \end{itemize}
 %%%
@@ -149,8 +156,15 @@
 \subsection{Household} % (fold)
 \label{sub:household}
 
-
-
+There is a representative household with preferences represented by the utility function
+%%%
+\begin{equation}
+   \label{eq:utility}
+   E_0 \sum_{t=1}^{\infty} \beta^t \bigg[ \frac{ C_t^{1-\sigma} -1}{ 1-\sigma } - \chi \frac{ N_t^{1+ 1/\varphi} }{ 1+ 1/\varphi } \bigg]   
+\end{equation}
+%%%
+The total time endowment per period is normalized to 1, so . 
+The household owns the firms and markets are complete. 
 % Subsection household (end)
 %..........................................................................................................................
 
@@ -168,7 +182,7 @@
       
       %%
       \item Firm optimization \\
-      Taking $ w(),Y() $ as given the value function solves the Bellman equation and
+      Taking $ w(),Y() $ as given the value function solves the Bellman equation in XX and
       the $ \{ \tilde{p}, \xi \} $ are the associated policies
 
       %% 
@@ -181,18 +195,38 @@
 
       %% 
       \item Market clearing \\ \ \\
+      
+      %%
+      $\bullet $ Bonds market
+      
+      \hspace{1em} Simply requires that $ B_t = 0 $ {\color{RubineRed} Include this?}
+
       %% 
       $\bullet $ Labor market
       %%%
       \begin{equation}
          \label{eq:labor_market}
-         \left( \frac{1}{\chi} C^{-\sigma}  w \right)^{\varphi} = 
-         \int 
-         \left[ 
-            \frac{ \tilde{p}( a,\tilde{p}_{-1} )^{-\epsilon}Y }{ a }  + \left( \int^{\xi( )} \zeta dH( \zeta) \right) w 
-         \right]d\mu
+         %%%
+         \begin{split}
+            % \left( \frac{1}{\chi} C^{-\sigma}  w \right)^{\varphi} & = 
+            N & = 
+            \int \int_0^{ \bar{\xi} }
+            \Bigg[ 
+               \ell \Big(a, \tilde{p}(a,x,\xi; \bsy{s} ) ; \bsy{s}\Big) + 
+               \mathbbm{1} \Big\{ \tilde{p}(a,x,\xi; \bsy{s} ) \ne x \Big\} \xi
+            \Bigg]
+            dH( \xi ) \ d\widetilde{\Psi} \\           
+            & = \int 
+            \Bigg[ 
+                  H\Big( \tilde{\xi}( a,x;\bsy{s} ) \Big) \ell\Big(a, \tilde{p}^a(a; \bsy{s} ) ; \bsy{s} \Big) + \\
+            & \qquad \qquad
+                  \left( 1- H\Big( \tilde{\xi}( a,x;\bsy{s} ) \Big) \right) \ell\Big(a, x ; \bsy{s} \Big) + 
+                  \int_0^{ \tilde{\xi}(a,x; \bsy{s} ) } \xi dH(\xi)
+            \Bigg] d\widetilde{\Psi}
+         \end{split}
       \end{equation}
       %%%
+      where $ \ell(a,\tilde{p}; \bsy{s} ) = \frac{ \tilde{p}^{-\epsilon} Y }{ Z a } $ \\
       %% 
       $\bullet $ Goods market
       %%%
@@ -201,129 +235,744 @@
          %%%
          \begin{split}
             C_t = Y_t & = \left( \int_0^1 y(h)^{ \frac{\epsilon-1}{\epsilon} } dh \right)^{ \frac{\epsilon}{\epsilon-1} } \\
-                      & = \left( \int_0^1 y( a,\tilde{p}_{-1} ) d\mu \right)^{ \frac{\epsilon}{\epsilon-1} }
+                  1 & = \int \int_0^{ \bar{\xi} } \tilde{p} (a, x,\xi; \bsy{s} )^{1-\epsilon} dH(\xi) d\widetilde{\Psi}
          \end{split}
       \end{equation}
       %%%
-      where $ y( a,\tilde{p}_{-1} ) = \Big( \tilde{p}(a,\tilde{p}_{-1}) \Big)^{-\epsilon} Y  $
+      where $ y( a,x ) = \Big( \tilde{p}(a,x) \Big)^{-\epsilon} Y  $
       %% 
       \item Law of motion Distribution
    \end{enumerate}
    %%%
 \end{equil}
 % Subsection equilibrium (end)
+%............................................................................................................
+
+% SECTION MODEL (END)
+%............................................................................................................
+
+%************************************************************************************************************
+%%%%%%% METHOD
+%------------------------------------------------------------------------------------------------------------
+\section{Method} % (fold)
+\label{sec:method}
+
+%%%%%%% Finite Dimensional Approximation  
+%--------------------------------------------------------------------------------------------------------------------------
+\subsection{Finite Dimensional Approximation} % (fold)
+\label{sub:finite_dimensional_approximation}
+
+
+\textbf{Firm's Value Function}
+%%%
+\begin{itemize}[label=\raisebox{0.25ex}{\tiny $\bullet$ }]
+   
+   %%
+   \item Value functions are differently approximated in steady state and on the perturbation step 
+   %%%
+   \begin{equation}
+      \label{eq:approx_value_function}
+      v\big( a, x; \bsy{s} \big) \approx \sum_{j=1}^{n_a} \sum_{i=1}^{n_x} \theta_{j,i}( \bsy{s} ) \psi_{j,i} (a,x)
+   \end{equation}
+   %%%
+   %%
+   \item With a particular approximation of the value function, we solve for the coefficients at steady state 
+   using collocation which forces the equation to hold exactly on a set of grid points $ \big\{a_j, x_i \big\}_{j=1,n_A \ i =1,n} $
+   %%%
+   \begin{align*}
+      %%
+      % \label{eq:_eq1}
+      v \big( a_j, x_i; \bsy{\theta}^* \big) & = 
+      H \Big( \tilde{\xi}(a_j,x_i) \Big) 
+         \Bigg\{ 
+               \Pi^R\Big( a_j, \tilde{p}^a (a_j, x_i) ; \ \cdot \ \Big) + \beta\sum_{a_{j'}\in \mathcal{A} } \Pi(a_j,a_{j'})
+               v \left( a_{j'},\frac{\tilde{p}^a (a_j, x_i)}{\pi^*} ; \bsy{\theta}^* \right) 
+         \Bigg\} \  + \\
+      %%
+      % \label{eq:_eq2}
+      & \qquad \int_0^{ \tilde{\xi}(a_j,x_i) } \xi dH(\xi) \quad + \\
+      & \qquad \left( 1- H\Big( \tilde{\xi}(a_j,x_i) \Big) \right) 
+         \Bigg\{
+               \Pi^R\Big( a, x_i ; \ \cdot \ \Big) + \beta\sum_{a'\in \mathcal{A} } \Pi(a,a')
+               v \bigg( a',\frac{x_i}{\pi^*} ; \bsy{\theta}^* \bigg) 
+         \Bigg\}
+   \end{align*}
+   %%%
+   where the decision rules are computed from
+   %%%
+   \begin{align}
+      %%
+      \label{eq:policies_eq1}
+      & \tilde{\xi}(a_j, x_i) = \frac{ V^A(a_j, x_i ; \bsy{\theta}^*) - V^N(a_j, x_i ; \bsy{\theta}^*) }{ w^* } \\
+      %%
+      \label{eq:policies_eq2}
+      & 0 = Y^* \tilde{p}^{a}( a_j )  - \epsilon Y^* \left( \tilde{p}^a( a_j ) - \frac{ w^* }{a_j} \right) + 
+      \beta \Big( \tilde{p}^a( a_j ) \Big)^{\epsilon} 
+      \Bigg[ 
+            \sum_{a\in \mathcal{A} } \Pi (a,a') \frac{ \partial v \big( a', \tilde{p}^a( a_j )/\pi^* ; \bsy{\theta}^* \big) }{ \partial x' } 
+      \Bigg]
+   \end{align}
+   %%%
+   %%
+   \item Note that the conditional expectation of the future value function has been broken into two components:
+    the expectation with respect to idiosyncratic shocks is taken explicitly by integration while the expectation 
+    with respect to the aggregate shocks is denoted by the expectation operator. 
+
+    $ \theta^\prime $
+\end{itemize}
+%%%
+
+\textbf{Distribution}
+
+Two relevant distributions
+%%%
+\begin{itemize}[label=\raisebox{0.25ex}{\tiny $\bullet$ }]
+   
+   %%
+   \item $ \widetilde{\Psi}(a,x) $ : distribution over beginning of period real prices
+   %%
+   \item $ \Psi(a, \tilde{p}) $ : distribution over effective real prices (production relevant) and idio shocks $
+   \mathbf{t} $
+\end{itemize}
+%%%
+The $\widetilde{\Psi}$ distribution dynamics involves 3 different steps
+%%%
+\begin{enumerate}
+   %%
+   \item decision of price adjustment adjustment 
+   %%
+   \item exogenous transition
+   %%
+   \item deflation by inflation between $ t\mapsto t+1 $
+\end{enumerate}
+%%%
+The first option comes from \citet{reiter} and involves approximating both distributions by a finite number of mass
+points on a predefined grid on $ \mathcal{X} \defeq \big\{ x_i \big\}_{i=1}^{N_X} $ and productivity $\mathcal{A}$.
+%%
+Let $ \widetilde{\Psi}( a_j, \tilde{p}_{-1} ) $ denote the fraction of firms at the beginning of the period with
+productivity level $ a_j $ and last period relative price of $ \tilde{p}_{-1}$. The evolution of this distribution
+involves the three steps discussed above. For any pairs $\Big\{ ( a_{j}, \tilde{p}_{\text{-} 1}^i ) , ( a_{j}, x_{i'}
+)\Big\}  \subset \mathcal{A}\times \mathcal{X} $, the probability of moving from the first to the second is
+%%%
+\begin{equation}
+   \label{eq:transition_inflation}
+   prob( \qquad ; \Pi) = 
+   \begin{cases}
+      \frac{ \Pi^{-1} \tilde{p}_{\text{-} 1}^i - x_{i'-1} }{ x_{i'} - x_{i'-1}}   & \text{if } x_{i'}=\min \big\{ x \in
+      \mathcal{X} : x \ge \Pi^{-1} \tilde{p}_{\text{-} 1}^i \big\} \\
+      \frac{ x_{i'+1} - \Pi^{-1} \tilde{p}_{\text{-} 1}^i }{ x_{i'+1} - x_{i'}}   & \text{if } x_{i'}=\max \big\{ x \in
+      \mathcal{X} : x < \Pi^{-1} \tilde{p}_{\text{-} 1}^i \big\}   \\ 0 & \text{ow}
+   \end{cases}
+\end{equation}
+%%%
+Then, for any pair $ ( a_{j}, \tilde{p}^i ) \in \mathcal{A}\times \mathcal{X} $, next period ${\Psi}'$
+%%
+\begin{equation}
+   \Psi^{\prime} \Big( a_{j}, \tilde{p}^{i'} \Big) =  
+         \omega_{j, i'} \sum_{ i=1 }^{N_X} \xi_{j,i} \times \widetilde{\Psi}(a_j, x_i) + 
+         (1-\xi_{ j,{i'} }) \times \widetilde{\Psi}(a_j, x_{i'} )
+\end{equation}
+where $\omega_{j, i'}$
+\begin{equation*}
+   \label{eq:weight}
+   \omega_{j,i'} = \begin{cases}
+   \frac{ \tilde{p}_j - \tilde{p}^{i'-1} }{ \tilde{p}^{i'} - \tilde{p}^{i'-1} } & \text{ if } \tilde{p}_j \in \Big[
+   \tilde{p}^{i'-1},\tilde{p}^{i'} \Big] \\ \ & \ \\
+   \frac{ \tilde{p}^{i'+1} - \tilde{p}_j }{ \tilde{p}^{i'+1} - \tilde{p}^{i'} } & \text{ if } \tilde{p}_j \in \Big[
+   \tilde{p}^{i'},\tilde{p}^{i'+1} \Big] \\ \ & \ \\ 0 & \text{o.w.}
+   \end{cases}
+\end{equation*}
+
+\newpage
+%%%%%%%%%%%%%%%%%%%
+\textbf{Finite-Dimensional system}
+\bigskip
+%%%
+% \begin{equation}
+   % \label{eq:}
+\footnotesize
+   \begin{empheq} [left=\empheqlbrace]{gather*} 
+      %% HOUSEHOLD
+      \beta \left( \frac{Y'}{Y} \right)^{-\sigma} \frac{1}{\Pi'}R -1 \\
+      N^{1/\varphi}  - \frac{1}{\chi} Y^{-\sigma} w \\ \ \\
+      % -----------------------------------------------------------------------------------------------------   
+      %% Market Clearing conditions
+      N - \int 
+            \Bigg[ 
+                  H\Big( \tilde{\bsy{\xi}}_{j,i} \Big) 
+                     \frac{ \big( \tilde{p}^a(a) \big)^{-\epsilon} Y }{ Za } +
+                  \left( 1- H\Big( \tilde{\bsy{\xi}}_{j,i} \Big) \right) 
+                     \frac{ x^{-\epsilon} Y }{ Za } +
+                  \int_0^{ \tilde{\bsy{\xi}}_{j,i} } \xi dH(\xi)
+            \Bigg] d\widetilde{\Psi}(\Pi) \\
+      1 - \int 
+            \Bigg[ 
+                  H\Big( \tilde{\bsy{\xi}}_{j,i} \Big) \big( \tilde{p}^a ( a ) \big)^{1-\epsilon} + 
+                  \left( 1- H\Big( \tilde{\bsy{\xi}}_{j,i} \Big) \right) x^{1-\epsilon}
+            \Bigg] d\widetilde{\Psi}(\Pi)\\
+            % 
+      1 - \int \tilde{p}^{1-\epsilon} d\Psi'(\Pi) \\ \ \\
+      % -----------------------------------------------------------------------------------------------------   
+      %%% Dynamics of the Distribution
+      \text{Distribution Dynamics}      \\ \ \\
+      %% Exogenous
+      z'  - \rho_z z - \sigma_{z} \omega_z' \\ \ \\
+      % ( \tau^k )'  - \rho_k \tau^k - \sigma_{k} \omega_k' \\ \ \\
+      %
+      % -----------------------------------------------------------------------------------------------------   
+      %% Value Function
+      \bsy{V}_{j,i} - H\Big( \bsy{\tilde{\xi}}_{j,i} \Big) 
+         \Bigg\{
+                  \Pi^R \Big( a_j, \bsy{p}^a_{j} ; \ \cdot \ \Big) + 
+                  \beta \left( \frac{Y'}{Y} \right)^{-\sigma}  \sum_{j'} \Pi[ a_j,a_{j'} ] 
+                  \Big( \bsy{V}',v^* \Big) \left( a_{j'}, \frac{\bsy{p}^a_{j}}{ \Pi' } \right)
+         \Bigg\} \\
+         + \int_0^{ \tilde{\bsy{\xi}}_{j,i} } \xi dH(\xi)
+         - \left( 1- H\Big(  \tilde{\bsy{\xi}}_{j,i}  \Big) \right) 
+         \Bigg\{
+               \Pi^R\Big( a, x_i ; \ \cdot \ \Big) + 
+               \beta\sum_{j'} \Pi(a_j,a_{j'})
+                  \Big( \bsy{V}',v^* \Big) \bigg( a_{j'}, \frac{x_i}{ \Pi' } \bigg)
+         \Bigg\} \\
+      % -----------------------------------------------------------------------------------------------------   
+      %% FOC
+         \frac{ \partial \Pi^R}{ \partial \tilde{p} } \Big( a_j, \bsy{p}^a_j ; \ \cdot \ \Big) + \beta \left(
+         \frac{Y'}{Y} \right)^{-\sigma}  \sum_{j'} \Pi[ a_j,a_{j'} ]
+                  \frac{ \partial \Big( \bsy{V}',v^* \Big) }{ \partial x' } \left( a_{j'}, \frac{\bsy{p}^a_{j}}{ \Pi' }
+                  \right) \frac{1}{\Pi'}
+   \end{empheq}
+\normalsize
+% \end{equation}
+With all these approximations, the recursive equilibrium becomes computable. 
+
+function $ f $ that satisfies
+%%%
+\begin{equation}
+   \label{eq:equil_conditions}
+   \mathbb{E} \Big[ f \big( \mathbf{y}',\mathbf{y}, \mathbf{x}', \mathbf{x} \big) \Big] = 0
+\end{equation}
+%%%
+where $ \textbf{y} = \big( Y,N,R,\Pi,w, \bsy{V}, \bsy{p}^a, \bsy{\xi} \big) $ are the control variables, 
+$ \mathbf{x} = \big(\Psi, Z \big) $ are the (endogenous and exogenous) state variables.
+
+This puts the model in the canonical form presented in \citet{schmitt-uribe}. 
+
+% which we can recast on Sims form
+%%%
+% \begin{equation}
+%    \label{eq:sims_format}
+%    \Gamma_0 X_t = \Gamma_1 X_{t-1} + \Psi \epsilon_t + \Pi \eta_t
+% \end{equation}
+% %%%
+% by defining $ X_t = \Big[ \mathbf{y}_t,\mathbf{x}_t \Big] $ and introducing endogenous forecast errors $ \eta_t $
+% for the control variables $ E_t \Big[ \mathbf{y}_{t+1} \Big] = \mathbf{y}_{t+1} - \eta_{t+1} $. The expectation over states
+% next period is dealt by recognizing that uncertainty there is only related to the evolution of the exogenous process, which
+% are explicitly in \eqref{eq:sims_format} through $\epsilon_t$.
+% %
+% Doing that, we are able to represent \eqref{eq:linearized_equil_conditions} in the form \eqref{eq:sims_format}
+% with coefficients
+% \[
+%    \Gamma_0 = [ -f_{\mathbf{y}'} \ -f_{\mathbf{x}'}], \quad \Gamma_1 = [ f_{\mathbf{y}} \ f_{\mathbf{x}}], \quad \Pi = -f_{\mathbf{y}'}
+% \]
+% where yt is an n×1 vector of endogenous variables, \EPSILON is a l×1 vector of exogenous,
+% serially uncorrelated random disturbances, \eta_t is a k × 1 vector of expectation
+% errors, satisfying Et−1[\etat ]=0 for all t. \Gamma_0 and \Gamma_1 are n×n coefficient matrices, while
+%   \Psi  is n×l and \Pi
+%  is n×k
+
+%%%
+% Subsection finite_dimensional_approximation (end)
 %..........................................................................................................................
 
-
-%%%%%%% Computation  
+%%%%%%% Steady State  
 %--------------------------------------------------------------------------------------------------------------------------
-\subsection{Computation} % (fold)
-\label{sub:computation}
+\subsection{Steady State} % (fold)
+\label{sub:steady_state}
 
-Compute Steady State
+\textbf{OPTION 02}
+
 %%%
 \begin{enumerate}
    
    %%
-   \item Guess a value for the wage $ w^* $
-   %% 
-   \item Given $ w^* $ compute the firm's value function by iterating on Bellman equation. 
-   \emph{Note that $ Y $ can be suppressed from the stationary Bellman because it is a multiplicative
-      constant}. 
-   %% 
-   \item Using firm's decision rules, compute the invariant distribution
-   %% 
-   \item Compute aggregate supply using the invariant distribution 
-   \[
-      \frac{C}{Y} = \left( \int  \tilde{p}(a,\tilde{p}_{-1})^{1 -\epsilon} d\mu \right)^{ \frac{\epsilon}{\epsilon-1} }
-   \]
-   If $ <1 $ increase $ w $ otherwise decrease $ w $ ( {\em \color{blue} Check on code} )
+   \item Guess a value a pair $ w^*,Y^* $
+   %%
+   \item Given $ \Big(w^*,Y^* \Big) $, compute the firm's value function.
+   %%
+   \item Using the firm's decision rules, compute the invariant distribution.
+   %%
+   \item Check the market-clearing conditions
+      %%%
+      \begin{align*}
+         %%
+         % \label{eq:_eq1}
+         1 & = \int \tilde{p}^{1-\epsilon} \Psi\big(da, d\tilde{p} \big) \\
+         %%
+         % \label{eq:_eq2}
+         N^* & = 
+         \int \ell \big( a, \tilde{p} \big) \Psi \big(da,d\tilde{p} \big) + 
+         \int \left( \int^{\tilde{\xi}( a, x) } \zeta dH( \zeta) \right) \widetilde{\Psi} \big( da,dx \big)
+      \end{align*}
+      %%%
+\end{enumerate}
+%%%
+% Subsection steady_state (end)
+%............................................................................................................
+
+
+% SECTION METHOD (END)
+%..................................................................................................
+
+
+\newpage
+%**************************************************************************************************
+%%%%%%% LINEAR_RATIONAL_EXPECTATIONAL_DIFFERENCE_EQUATIONS
+%--------------------------------------------------------------------------------------------------
+\section{Linear Rational Expectational Difference Equations} % (fold)
+\label{sec:linear_rational_expectational_difference_equations}
+
+%%%%%%% Preliminaries  
+%--------------------------------------------------------------------------------------------------------------------------
+\subsection{Preliminaries} % (fold)
+\label{sub:preliminaries}
+
+\begin{definition}
+   Let $ P\in \mathbb{C}\rightarrow \mathbb{C}^{n\times n} $ be a matrix-valued function of a complex variable (a matrix
+pencil). Then the set of its generalized eigenvalues $ \lambda( P) $ is defined as
+\[
+   P(z) \defeq \big\{ z\in \mathbb{C}: \lvert P(z) \rvert = \mathbf{0} \big\}
+\]
+When $P(z)$ writes as $Az−B$, we denote this set as $\lambda(A,B)$. Then there exists
+a vector $V$ such that $BV = \lambda AV$ .
+\end{definition}
+
+\begin{theorem}[The complex generalized Schur form]
+Let $A$ and $B$ belong to $ \mathbb{C}^{n\times n} $ and be such that $ P(z) = Az - B$ is a regular matrix pencil. Then
+there exist unitary $n\times n$ matrices of complex numbers $Q$ and $Z$ such that
+%%%
+\begin{enumerate}
+   
+   %%
+   \item $ S = Q A Z $ is upper-triangular
+   %%
+   \item $ T = Q B Z $ is upper-triangular
+   %%
+   \item For each $ i $, $ s_{ii},t_{ii}$ are not both zero
+   %%
+   \item $ \lambda(A,B) = \left\{ \frac{t_{ii}}{s_ii} : \ s_{ii}\ne 0 \right\}$
+   %%
+   \item The pairs $ (s_{ii}, t_{ii} ) $ can be arranged in any order
 \end{enumerate}
 %%%
 
-% Subsection computation (end)
+\end{theorem}
+
+\begin{theorem}[\emph{Singular Value Decomposition}]
+   Every $m\times n $ complex matrix $ A $ can be factored into a product of three matrices
+   %%%
+   \begin{equation}
+      \label{eq:SVD}
+      A = U S V'
+   \end{equation}
+   %%%
+   called a \emph{singular value decomposition (SVD)} where
+   %%%
+   \begin{itemize}%[label=\raisebox{0.25ex}{\tiny $\bullet$ }]
+      
+      %%
+      \item $ U _{m\times m}, V_{n\times n}$ are orthogonal matrices 
+      %%
+      \item $ S $ is a diagonal matrix with entries $ \sigma_1 \ge \sigma_2 \ge \ldots \ge \sigma_{\min\{n,m\}} \ge 0$. 
+   \end{itemize}
+   %%%
+   The values $ \sigma_i $ are called the \textbf{singular values} of $ A $, while the column vectors $ u_j,v_i $ are
+   the left/right \textbf{singular vectors}.
+\end{theorem}
+
+% Subsection preliminaries (end)
 %..........................................................................................................................
-% SECTION MODEL (END)
-%..............................................................................................................
 
-
-%%%%%%% Perturbing the value Function  
+%%%%%%% Klein  
 %--------------------------------------------------------------------------------------------------------------------------
-\subsection{Perturbing the value Function} % (fold)
-\label{sub:perturbing_the_value_function}
+\subsection{Klein} % (fold)
+\label{sub:klein}
 
+Linearizing \eqref{eq:equil_conditions} around the steady-state yields a first-order linear expectational difference
+equation system of the form
 %%%
 \begin{equation}
-   \label{eq:interpol}
-   \text{itp} \Big[ V_{E,t}^*, V_{E}^{*} \Big]( \tilde{x} ) = V_{E}^*( \tilde{x} ) + 
-      \frac{ \tilde{x} - \bar{x}_i }{ \bar{x}_{i+1} - \bar{x}_i } \Big( V_{E,t}[i+1] - V_{E,t}^{*}(\bar{x}_{i+1}) \Big) +
-      \frac{ \bar{x}_{i+1} -\tilde{x} }{ \bar{x}_{i+1} - \bar{x}_i } \Big( V_{E,t}[i] - V_{E,t}^{*}(\bar{x}_i) \Big)
+   \label{eq:linearized_equil_conditions}
+   f_{ \mathbf{y}' } E_t \Big[ \underbrace{ ( \mathbf{y}_{t+1} -  \bar{\mathbf{y}}) }_{ \tilde{\mathbf{y}}_{t+1} } \Big] 
+   + f_{ \mathbf{y} }   \tilde{\mathbf{y}}_t  
+   + f_{ \mathbf{x}' }  E_t \Big[  \tilde{\mathbf{x}}_{t+1} \Big]
+   + f_{ \mathbf{x} }   \tilde{\mathbf{x}}_{t}
+   = 0
 \end{equation}
 %%%
-
-% Subsection perturbing_the_value_function (end)
-%..........................................................................................................................
-
-%%%%%%% How to do the perturbation of policy  
-%--------------------------------------------------------------------------------------------------------------------------
-\subsection{How to do the perturbation of policy} % (fold)
-\label{sub:how_to_do_the_perturbation_of_policy}
-
-Policy outside steady state must satisfy
+which we can put on Klein's form letting $ A = - \big[f_{ \mathbf{x}' } \quad f_{ \mathbf{y}' } \big] $  and $ B
+=\big[f_{ \mathbf{x} } \quad  f_{ \mathbf{y} } \big] $. Then the system can be written as
 %%%
 \begin{equation}
-   \label{eq:maximization_prob}
-   x'(z,x; X_t ) = \argmax_{x'} \bigg\{ U(z,x,x'; X_t) + \beta \  \text{itp} \Big[ V_{E,t} , V_{E}^* \Big]( x' ) \bigg\}
+   \label{eq:klein}
+   A E_t \left\{ 
+   \begin{bmatrix}
+      x_{t+1} \\ y_{t+1}
+   \end{bmatrix}
+   \right\} = 
+   B 
+   \begin{bmatrix}
+      x_{t} \\ y_t 
+   \end{bmatrix}
 \end{equation}
 %%%
-so that in steady state the whole expression reduces to simply $ V^*( \tilde{x} ) $.
-
-Taking \emph{foc}
+Consider the generalized Schur decomposition of $ A, B $ 
 %%%
 \begin{equation}
-   \label{eq:foc}
-   0 = U_{x'} \Big( z, x, x'(z,x;X_t ); X_t \Big) + \beta 
-   \left[
-      \frac{ dV_E^*(x'( z,x;X_t) ) }{ dx } + \frac{ dV_{E,t}[ i+1 ] - dV_{E,t}[i] }{ \bar{x}_{i+1} - \bar{x}_{i} }
-   \right]  
-   \tag{dvdc}
+   % \label{eq:}
+   Q A Z = S \qquad Q B Z = T
 \end{equation}
-which at steady-state satisfy
+%%%
+where $ A,B $ are upper triangular and $ Q,Z$ are orthonormal matrices. Let $ S $ and $ T $ be arranged in such a way
+that the $ n_s $ stable eigenvalue come first. Partition the rows of $ Z $ conformably as 
 %%%
 \begin{equation*}
-   \label{eq:focstst}
-   0 = U_{x'} \Big( z, x, x^*(z,x); X^* \Big) + \beta 
-   \left[
-      \frac{ dV_E^* \Big(x^*(z,x) \Big) }{ dx }
-   \right]  
+   % \label{eq:}
+   Z = 
+   \begin{bmatrix}
+      Z_{11} & Z_{12} \\ Z_{21} & Z_{22}
+   \end{bmatrix}
 \end{equation*}
 %%%
-while the \emph{soc} at steady state values
+DEfine the auxiliary variables $ W_t $ as
 %%%
 \begin{equation}
-   \label{eq:soc}
-   U_{x'x'} \Big( z,x, x^*(z,x); X^* \Big) + \beta \frac{d^2V^*\Big( x^*(z,x) \Big)}{dx^2}
-   \tag{d2vdc2}
+   \label{eq:aux}
+   w_t \defeq Z^{H} \big[ x_t' \ y_t' \big]' =
+   \begin{bmatrix}
+      s_t \\ u_t
+   \end{bmatrix}
 \end{equation}
 %%%
-
-Hence
+where the transformed variable $ w_t $ is divided into $ n_s\times 1 $ stable and $ n_u \times 1 $ unstable components. 
+Premultiply the system by $ Q $ to get 
+%%%
+\begin{equation}
+   % \label{eq:}
+   \begin{bmatrix}
+      S_{11} & S_{12} \\ 0 & S_{22}
+   \end{bmatrix}
+   E_t \left\{
+   \begin{bmatrix}
+      s_{t+1} \\ u_{t+1}
+   \end{bmatrix} \right\}
+    = 
+    \begin{bmatrix}
+       T_{11} & T_{12} \\ 0 & T_{22}
+    \end{bmatrix}
+    \begin{bmatrix}
+      s_{t} \\ u_{t}
+   \end{bmatrix}
+\end{equation}
+%%%
+Since the generalized eigenvalues of the matrix pencil $ S_{22}z - T_{22} $ are all unstable, the unique stable solution
+for $ u_t $ is found by solving forward
+%%%
+\begin{equation}
+   \label{eq:unstable_sol}
+   u_t = T_{22}^{-1} S_{22} E_t\{ u_{t+1} \} = 0
+\end{equation}
+%%%
+The first block then implies
+%%%
+\begin{equation}
+   % \label{eq:}
+   E_t\big\{ s_{t+1} \big\}  = S_{11}^{-1} T_{11} s_t
+\end{equation}
+%%%
+Recalling the definition of $ w_t $
+%%%
+\begin{equation}
+   % \label{eq:}
+   x_{t+1} = 
+      \begin{bmatrix}
+         Z_{11} & Z_{12}
+      \end{bmatrix} 
+      \begin{bmatrix}
+         s_{t+1} \\ u_{t}
+      \end{bmatrix}
+\end{equation}
+%%%
+we have
 %%%
 \begin{equation}
    \label{eq:}
-   \frac{ dx'\Big( z,x; X_t\Big) }{ dX_t } = - \frac{1}{ \text{d2vdc2} } \Big( \text{d2vdc2.der} \Big)
+   z_{11} \Big( s_{t+1} -  E_t\{ s_{t+1} \}\Big) = \eta \epsilon_{t+1}
 \end{equation}
-%%%   
-% Subsection how_to_do_the_perturbation_of_policy (end)
+%%%
+Taken together, these define the unique solution for $ s_t $ given $ s_0 $ and the exogenous process $ \epsilon $
+%%%
+\begin{equation}
+   % \label{eq:}
+   s_{t+1} = S_{11}^{-1} T_{11} s_t + Z_{11}^{-1} \eta \epsilon_{t+1}
+\end{equation}
+%%%
+We can now use the relation $ \Big[x_t' \ y_t'\Big]' = Z w_t$ to find a recursive representation of the solution. Using
+the restriction on the control 
+%%%
+\begin{align}
+   %%
+   % \label{eq:_eq1}
+   Z^H_{21} x_t + Z^H_{22} y_t = 0 \Rightarrow y_t & = - \big( Z^H_{22} \big)^{-1} Z^{H}_{21} x_t 
+   & \quad \quad & \notag \\
+   %%
+   % \label{eq:_eq2}
+   & = \big( Z^H_{22} \big)^{-1} Z^H_{22} Z_{21} Z_{11}^{-1} x_t \notag \\
+   & = Z_{21}Z_{11} x_t
+\end{align}
+%%%
+As for $ x_t $, note that
+%%%
+\begin{align*}
+   %%
+   % \label{eq:_eq1}
+   s_t & = Z^H_{11}x_t + Z^H_{12} y_t \\
+       & = \Big( Z^H_{11} + Z^H_{12} Z_{21}Z_{11}^{-1} \Big) x_t \\
+       & = \bigg( Z^H_{11} + \Big( Z_{11}^{-1} - Z^H_{11} \Big) \bigg) x_t \\
+       & = Z_{11}^{-1} x_t
+\end{align*}
+%%%
+Hence 
+%%%
+\begin{equation}
+   % \label{eq:}
+   x_{t+1} = Z_{11} S_{11}^{-1} T_{11} Z_{11}^{-1} x_t + \eta \epsilon_{t+1}
+\end{equation}
+%%%
+
+% Subsection klein (end)
 %..........................................................................................................................
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%% End document
+%%%%%%% Sims  
+%--------------------------------------------------------------------------------------------------------------------------
+\subsection{Sims} % (fold)
+\label{sub:sims}
 
 
-% ============================================================================================================
-%------------------------------------------------ REFERENCE ------------------------------------------------
-% ============================================================================================================
+
+Consider the following model 
+%%%
+\begin{equation}
+   \label{eq:sims_format}
+   \Gamma_0 y_t = \Gamma_1 y_{t-1} + \Psi \epsilon_t +\Pi \eta_t
+\end{equation}
+%%%
+where $ y_t $ is a $ n\time 1 $ vector of endogenous variables, $ \Gamma_0,\Gamma_1 $ are $ n\times n $ coefficients
+matrices , $ \epsilon_t $ is a $ \ell\times 1 $ vector of exogenous random disturbances, $ \eta_t $ is an
+$ k\times 1 $ vector of expectational errors satisfying $ E_t \big[ \eta_{t+1} \big] =0 $. 
+Note that $ \eta_t $ terms are not given exogenously, instead they are determined as part of the solution. 
+
+This method uses the notation that in which time arguments relate consistently to the information structure, meaning
+that variables date $ t $ are always know at date $ t $.
+
+%%%%%%% Special Case  
+%------------------------------------------------------------------------------------------------------------
+\subsubsection{Special Case} % (fold)
+\label{sub:special_case}
+
+Consider the special case of \eqref{eq:sims_format}
+\[
+   y_t = \Gamma y_{t-1} + \Psi \epsilon_t +\Pi \eta_t
+\]
+Assume that the matrix $ \Gamma $ can be diagonalized to
+\[
+   \Gamma = P \Lambda P^{-1}
+\]
+where $ P $ is the matrix of right-eigenvectors of $ \Gamma $, $ P^{-1} $ is the matrix of left-eigenvectors
+and $ \Lambda $ is the diagonal matrix of eigenvalues. Multiplying the system by $ P^{-1} $ and defining $ w = P^{-1} y $
+we arrive at
+%%%
+\begin{equation}
+   \label{eq:diag_system}
+   w_t = \Lambda w_{t-1} + P^{-1} \Big( \Psi \epsilon_t + \Pi \eta_t \Big)
+\end{equation}
+%%%
+Since $\Gamma$ is diagonal the system breaks into unrelated components
+%%%
+\begin{equation}
+   \label{eq:single_eq}
+   w_{j,t} = \lambda_j w_{j,t-1} + \tilde{P}_{j\cdot} \Big( \Psi \epsilon_t + \Pi \eta_t \Big)
+\end{equation}
+%%%
+If the disturbance term zero and $ \lambda_j \ne 1$, the model has a deterministic steady-state solution 
+%%%
+\begin{equation}
+   \label{eq:restriction}
+   w_{j,t} = 0 
+\end{equation}
+%%%
+If $ \lvert \lambda_j \rvert > 1$, then $ E_t\big[ w_{j,t+\tau} \big] $ diverges as $ \tau\rightarrow \infty $ for any
+solution other then $ w_{j,t} = 0 $. If we are looking for a \emph{stationary equilibrium}, every one of 
+the variables $ w_j $ corresponding to $ \lvert \lambda_j \rvert > 1 $ and to $ P_{j,:}\ne 0 $ must be set to its steady-state value. 
+If \eqref{eq:restriction} holds for all $ t $ then \eqref{eq:single_eq} implies
+%%%
+\begin{equation}
+   \label{eq:eta_rest_01}
+   \tilde{P}_{j\cdot} \Big( \Psi \epsilon_t + \Pi \eta_t \Big) = 0 
+\end{equation}
+%%%
+Collecting all the rows of $ P^{-1} $ for which \eqref{eq:eta_rest_01} holds into a single matrix $ \tilde{P}^U $, 
+we can write
+%%%
+\begin{equation}
+   \label{eq:eta_rest_02}
+   \tilde{P}^U \Big( \Psi \epsilon + \Pi \eta \Big) = 0
+\end{equation}
+%%%
+Existence problems arise if the endogenous shocks $ \eta $ cannot adjust to offset the exogenous disturbances $ \epsilon
+$. This accounts for the usual notion that there are existence problems if the number of \emph{unstable roots} exceeds
+the number of \emph{jump variables}. The precise condition here is that the columns of $ \tilde{P}^U \Pi $  span the
+space spanned by the columns of $ \tilde{P}^U \Psi $, i.e.
+%%%
+\begin{equation}
+   \label{eq:iexistence}
+   \text{span} \Big( \tilde{P}^U \Psi \Big) \subset \text{span} \Big( \tilde{P}^U \Pi \Big)
+\end{equation}
+%%%
+Multiple solutions may exist when \eqref{eq:iexistence} puts too few restrictions. For the solution to be unique, it
+must be that \eqref{eq:iexistence} pins down not only the value of $ \tilde{P}^U \Pi \eta $ but also$ \tilde{P}^S \Pi
+\eta $ which resumes the impact of expectational shocks on the stable block of the system \eqref{eq:diag_system}.
+Formally, we require the row space of $  \tilde{P}^S \Pi  $ to be included into the row space of $ \tilde{P}^U \Pi $.
+% %%%
+% \begin{equation}
+%    \label{eq:iuniqueness}
+%    \text{span} \Big( \big( \tilde{P}^S \Pi \big)' \Big) \subset \text{span} \Big( \big( \tilde{P}^U \Pi \big) \Big)
+% \end{equation}
+% %%%
+In that case, there exists $ \Phi $ such that
+%%%
+\begin{equation}
+   \label{eq:row_space_transf}
+   \tilde{P}^S \Pi = \Phi \tilde{P}^U \Pi
+\end{equation}
+%%%
+We can write the solution by assembling the equations representing the stability conditions \eqref{eq:restriction}
+together with the lines of \eqref{eq:diag_system} that determine $ w_s $ and use \eqref{eq:row_space_transf} to
+eliminate the dependence over $ \eta $.
+%%%
+\begin{equation}
+   \label{eq:system1_simul}
+   \begin{bmatrix}
+      w^S_{t} \\ w^U_{t}
+   \end{bmatrix} = 
+   \begin{bmatrix}
+      \Lambda_S \\ \mathbf{0}
+   \end{bmatrix} w^S_{t-1}
+   \begin{bmatrix}
+      I & -\Phi  \\ \mathbf{0} & \mathbf{0}
+   \end{bmatrix}P^{-1} \Psi \epsilon_t
+\end{equation}
+%%%
+Multiply by $ P $ to arrive in $ y $
+%%%
+\begin{equation}
+   \label{eq:system2_simul}
+   y_t = \underbrace{P_{:,S} \Lambda_S \tilde{P}^S}_{ \Theta_y } y_{t-1} + 
+         \underbrace{\Big( P_{:,S} \tilde{P}^S - P_{:,S} \Phi \tilde{P}^U \Big) \Psi}
+         _{\Theta_{\epsilon}} \epsilon_t
+\end{equation}
+%%%
+
+% Subsection special_case (end)
+%..................................................................................................
+
+%%%%%%% General CAse  
+%--------------------------------------------------------------------------------------------------
+\subsubsection{General CAse} % (fold)
+\label{sub:general_case}
+\emph{Generalized Schur decomposition} there exist matrices $ Q,Z,T $ and $ S $
+such that
+%%%
+\begin{align}
+   %%
+   % \label{eq:_eq1}
+   & Q' S Z' = \Gamma_0, \qquad Q' T Z' = \Gamma_1 \\
+   %%
+   % \label{eq:_eq2}
+   & QQ' = ZZ' = I_{n\times n}
+\end{align}
+%%%
+Let us define $ w_t = Z'y_t $ and pre-multiply the system by $ Q $ in order to get
+%%%
+\begin{equation}
+   \label{eq:QZsims_eq01}
+   \begin{bmatrix}
+      S_{11} & S_{12} \\ 0 & S_{22}
+   \end{bmatrix}   
+   \begin{bmatrix}
+      w_{1,t} \\ w_{2,t}
+   \end{bmatrix} = 
+   \begin{bmatrix}
+      T_{11} & T_{12} \\ 0 & T_{22}
+   \end{bmatrix}
+   \begin{bmatrix}
+      w_{1,t-1} \\ w_{2,t-1}
+   \end{bmatrix} +
+   \begin{bmatrix}
+      Q_1 \\ Q_2
+   \end{bmatrix}
+   \Big( \Psi \epsilon_t + \Pi \eta_t \Big) 
+\end{equation}
+%%%
+Let's focus on the explosive part of the system 
+\[
+   S_{22} w_{2,t} = T_{22} w_{2,t-1} + Q_2\Big( \Psi \epsilon_t + \Pi \eta_t \Big) 
+\]
+While the diagonal elements of $ S_{22} $ can be null, $ T_{22} $ is necessarily full rank. Therefore, we can solve
+forward for $ w_{2,t-1} $. Start by leading the equation by one period and writing it in terms of $ w_{2,t} $
+\[
+   w_{2,t} = M z_{2,t+1} - T_{22}^{-1} Q_2 \Big( \Psi \epsilon_{t+1} + \Pi \eta_{t+1} \Big) 
+\]
+where $ M \defeq T_{22}^{-1} S_{22} $. Recursive substitution of $ w_{2,t+1} $ leads us to 
+\[
+   w_{2,t} = - \sum_{i=1}^{\infty} M^{i-1} T_{22}^{-1} Q_2 \Big( \Psi \epsilon_{t+i} + \Pi \eta_{t+i} \Big)
+\]
+where we imposed $ \lim M^t w_{2,t} = 0 $ since we are searching for a non-explosive solution of the LRE model
+\eqref{eq:sims_format}. Since $ y_{t} $ is known at time $t$, $ w_{2,t} = E_t \{w_{2,t} \}$ which implies
+\[
+   w_{2,t} = - \sum_{i=1}^{\infty} M^{i-1} T_{22}^{-1} Q_2 
+         \Big( 
+            \Psi E_t\big\{ \epsilon_{t+i} \big\} + 
+            \Pi E_t \big\{\eta_{t+i} \big\}
+         \Big) = 0
+\]
+which imposes a restriction on $ \epsilon_t,\eta_t $. If we go back to \eqref{eq:QZsims_eq01} and take into account $
+W_{2,t} = 0$  in the second block, this imposes
+%%%
+\begin{equation}
+   \label{eq:QZsims_epislon_x_eta}
+   \underbrace{Q_2 \Psi}_{ n_u \times \ell } \ \underbrace{\epsilon_t}_{ \ell \times 1 } 
+   \quad + \quad 
+   \underbrace{Q_2 \Pi}_{ n_u \times k }     \ \underbrace{\eta_t}_{k\times 1} = 0
+\end{equation}
+%%%
+As before, existence problems arise if the endogenous shocks $ \eta $ cannot adjust to offset the exogenous shocks
+$\epsilon $ in \eqref{eq:QZsims_epislon_x_eta}. Note that the assertion in \eqref{eq:QZsims_epislon_x_eta} is only
+possible because of the degree of freedom to choose $\eta$, otherwise it requires that exogenously evolving events
+always satisfy a deterministic equation.
+
+% Subsection general_case (end)
+%..................................................................................................
+
+% Subsection sims (end)
+%..........................................................................................................................
+
+% SECTION LINEAR_RATIONAL_EXPECTATIONAL_DIFFERENCE_EQUATIONS (END)
+%..................................................................................................
+
+
+% =================================================================================================
+%----------------------------------------- REFERENCE -------------------------------------------
+% =================================================================================================
 \clearpage
 \newpage
 %%%%% MAC
@@ -331,6 +980,101 @@ Hence
 % \bibliography{/Users/felipealves/Dropbox/TexFolder/sample2}
 %%%%% PC
 \bibliographystyle{C:/Users/falves/Dropbox/TexFolder/plainnat2}
+\bibliography{C:/Users/falves/Dropbox/TexFolder/2nd_year_paper}
 % \bibliography{C:/Users/falves/Dropbox/TexFolder/}
 
-\end{document}  
+\newpage
+\appendix
+%%%%%%% Perturbing the value Function  
+%------------------------------------------------------------------------------------------------------------
+\section{Perturbing the value Function} % (fold)
+\label{sub:perturbing_the_value_function}
+
+function in Reiter: \texttt{BellmanIterGivenPolicy1dd}
+
+We adopt the following approximation to perturb the value function
+%%%
+\begin{equation}
+   \label{eq:interpol}
+   \text{itp} \Big(  \bsy{V}, v^{*} \Big)(z_j, \tilde{x} ) = v^*( z_j, \bsy{x} ) + 
+      \frac{ \tilde{x} - \bar{x}_i }{ \bar{x}_{i+1} - \bar{x}_i }    \Big( \bsy{V}_{j, i+1} - v^{*}( z_j, \bar{x}_{i+1}) \Big) +
+      \frac{ \bar{x}_{i+1} -\tilde{x} }{ \bar{x}_{i+1} - \bar{x}_i } \Big( \bsy{V}_{j, i}   - v^{*}(z_j, \bar{x}_i) \Big)
+\end{equation}
+In steady state, $\bsy{V}_t[ j,i ] = v^* ( z_j,x_i ) $ so that in steady state the whole expression reduces to simply $ v^*( a, \tilde{x} ) $.
+% Subsection perturbing_the_value_function (end)
+%............................................................................................................
+
+%%%%%%% How to do the perturbation of policy  
+%------------------------------------------------------------------------------------------------------------
+\section{How to do the perturbation of policy} % (fold)
+\label{sub:how_to_do_the_perturbation_of_policy}
+
+\texttt{policyPtyerturb1dd} for perturbation of policies
+
+The policy outside steady state must satisfy
+%%%
+\begin{equation}
+   \label{eq:maximization_prob}
+   x_{t}'\Big( z, x \Big) = \argmax_{x'} \Bigg\{ U(z,x,x'; X_t) + \beta \ 
+      \mathbb{E}_t
+      \bigg[ 
+         \sum_{ z' \in \mathcal{Z} } \Pi(z,z') \text{itp} \Big[ \bsy{V}_{t+1} , v^* \Big]( z', x' ) 
+      \bigg]
+      \Bigg\}
+\end{equation}
+%%%
+
+Since it is optimal, it must satisfy the \emph{foc} for all realizations of aggregate state
+%%%
+\begin{equation}
+   \label{eq:foc}
+   % f(z,x; X_t, X_{t+1}) \defeq 
+   \mathbb{E}_t 
+   \left[
+   U_{x'} \Big( z, x, \bsy{x}_t'(z,x); \bsy{X}_t \Big) + \beta
+      \sum_{z \in \mathcal{Z} }  \Pi(z,z')
+      \Bigg( 
+         \frac{ \partial v^*(z', \bsy{x}_t'(z,x) ) }{ \partial x' } + 
+         \frac{ d \bsy{V}_{t+1}[j,i+1 ] - d \bsy{V}_{t+1}[j,i] }{ \bar{x}_{i+1} - \bar{x}_{i} }
+       \Bigg)
+   \right] = 0
+   \tag{dvdc}
+\end{equation}
+We know that at steady-state the policy computed in Step XX satisfy
+%%%
+\begin{equation*}
+   \label{eq:focstst}
+   0 = U_{x'} \Big( z, x, x'(z,x; X^*); X^* \Big) + \beta 
+      \sum_{z \in \mathcal{Z} }  \Pi(z,z')
+      \Bigg( 
+         \frac{ \partial v^* \Big(z', x'(z,x; X^*) \Big) }{ \partial x' } +
+         \frac{ d \bsy{V}^*_{j,i+1} - d \bsy{V}^*_{j,i} }{ \bar{x}_{i+1} - \bar{x}_{i} }
+       \Bigg)
+\end{equation*}
+%%%
+while the \emph{soc} again at steady state values satisfy
+%%%
+\begin{equation}
+   \label{eq:soc}
+   U_{x'x'} \Big( z,x, x'(z,x; X^*) ; X^* \Big) + \beta 
+         \sum_{z \in \mathcal{Z} }  \Pi(z,z')
+         \frac{ \partial^2 v^*\Big( z', x'(z,x; X^*) \Big)}{ \partial {x'}^2}
+   \tag{d2vdc2}
+\end{equation}
+%%%
+Hence, to compute how the policy changes given variations on other equilibrium quantities we can use
+the \emph{Implicit function theorem} to get
+%%%
+\begin{equation}
+   \label{eq:}
+   \frac{ \partial x' \Big( z,x ; X^* \Big) }{ \partial X }  = - \frac{1}{ \text{d2vdc2} } \Big( \text{d2vdc2.der} \Big)
+\end{equation}
+%%%   
+% Subsection how_to_do_the_perturbation_of_policy (end)
+%..................................................................................................
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% End document
+
+\end{document}   

@@ -280,7 +280,7 @@ function expect_k{T<:Real}(vHistogram::Vector{T}, cp::ConsumerProblem)
 end
 
 """
-Computer the Transition matrix from policies
+Compute the Transition matrix from policies
 
 """
 function forward_mat{T<:Real}(cp::ConsumerProblem, Θ::Array{T})
