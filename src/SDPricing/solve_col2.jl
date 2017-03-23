@@ -58,13 +58,18 @@
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+newton_output_file = "C:\\Users\\falves\\Git\\Reiter\\src\\SDPricing\\newton_output.dat"; # []
+FF = open(newton_output_file,"w")
+
 """
-    Solve for the firm's value function and policies
+  Solve for the firm's value function and policies
+
 """
 function solve_firm_policy!(fcoll::FirmColloc, sol::FirmSolution, w::Float64, Y::Float64=1.0, method::Int64 = 2)
 
     Φ = fcoll.Φ
     Φ_fac = fcoll.Φ_fac
+
     # .....................................................................................
 
     tol = 1e-10
@@ -73,7 +78,8 @@ function solve_firm_policy!(fcoll::FirmColloc, sol::FirmSolution, w::Float64, Y:
 
     ii = 1
     err = 1.0
-    while err > tol && ii <= 1000
+    # global newton_output = open(newton_output_file, "w")
+    while err > tol && ii <= 25
 
         (method==1) && bellman_rhs!(Vnew, fcoll, sol, w, Y)
         (method==2) && bellman_rhs_eval_v!(Vnew, fcoll, sol, w, Y)
@@ -87,20 +93,21 @@ function solve_firm_policy!(fcoll::FirmColloc, sol::FirmSolution, w::Float64, Y:
         fill!(Vnew, 0.0)
         ii += 1
     end
-
+    # close(newton_output)
     return nothing
 end
 
 """
-Computes the RHS of our system of equations for a given guess of collocation
-coefficients.
+  Computes the RHS of our system of equations for a given guess of collocation
+  coefficients. This version creates a function v̂ to use at the evaluations
 
-## Arguments
+### Arguments
 
-- `V`
-
+    - `V`
+    - `fcoll`
+    - `sol`
 """
-function bellman_rhs_eval_v!(V::Array{Float64,2}, fcoll::FirmColloc, sol::FirmSolution, w::Float64, Y::Float64, max::Bool = true)
+function bellman_rhs_eval_v!(V::Array{Float64,2}, fcoll::FirmColloc, sol::FirmSolution, w::Float64, Y::Float64, maximize_pol::Bool = true)
 
     @getPar __pars
 
@@ -114,6 +121,7 @@ function bellman_rhs_eval_v!(V::Array{Float64,2}, fcoll::FirmColloc, sol::FirmSo
     #== Basis matrices ==#
     Φ_z::SparseMatrixCSC{Float64,Int64}   = fcoll.Φ_tensor.vals[2]
     p_basis = fcoll.p_basis
+
     #== Coefficients for before shock value function ==#
     cv = sol.coeff[:,3]
     function eval_v̂(p̃::Vector{Float64}, z_ind::Vector{Int64}, deriv::Int64 = 0)
@@ -124,29 +132,42 @@ function bellman_rhs_eval_v!(V::Array{Float64,2}, fcoll::FirmColloc, sol::FirmSo
         return Φ_eval * cv
     end
 
-    if max
-        #== FIND optimal p̃ in case of adjustment ==#
-        # f!(p̃, rout) = foc_price_adjust!(rout, p̃, w, cv, p_basis, Φ_z, ind_z_x_z)
-        # g!(p̃, Jout) = soc_price_adjust!(Jout, p̃, w, cv, p_basis, Φ_z, ind_z_x_z)
-        #
-        # res = nlsolve(f!, g!, fpol.pstar)
-        # if !res.f_converged
-        #     @printf("  - Problem with foc - residuals: %.3e \n", res.residual_norm)
-        #     pstar = fpol.pstar
-        # else
-        #     pstar = res.zero
-        # end
+    #== Do th MAX step ==#
+    if maximize_pol
 
-        # f_val(p̃) = foc_price_adjust(p̃, w, Y, cv, p_basis, Φ_z, ind_z_x_z)
-        # f_jac(p̃) = soc_price_adjust(p̃, w, Y, cv, p_basis, Φ_z, ind_z_x_z)
         f_val(p̃) = foc_price_adjust_eval_v(p̃, eval_v̂, w, Y)
         f_jac(p̃) = soc_price_adjust_eval_v(p̃, eval_v̂, w, Y)
 
+
+        ###  INFO:  Newton Iteration     ###
+        # println(newton_output, "ITERATIONS\n")
+        # pstar = copy(sol.pstar)
+        # for it = 1:25
+        #     # println(newton_output, f_val(pstar))
+        #     @printf(newton_output, " [")
+        #     map(x->@printf(newton_output, " % .3e",x), f_val(pstar))
+        #     @printf(newton_output, " ]\n")
+        #     copy!(pstar, pstar - f_jac(pstar) \ f_val(pstar))
+        # end
+        # println(newton_output, "------------------------------------\n")
+
+        ###  INFO:  Using Broyden     ###
         (pstar,ind) = broydn(f_val, sol.pstar, [1e-10,1,1], f_jac)
-        if ind!=0
-           @printf("  - Problem with foc - residuals: %.3e \n", maxabs(f_val(pstar)) )
-           pstar = sol.pstar
-        end
+
+        # (pstar2,ind) = broydn(f_val, sol.pstar, [1e-10,1,1], f_jac)
+        # @printf(" DISTANCE: ")
+        # map( x -> @printf(" %.3e",x), abs(pstar-pstar2) )
+        # @printf("\n")
+
+        # if ind!=0
+        #    @printf("  - Problem with foc - residuals: %.3e \n", maxabs(f_val(pstar)) )
+        #    pstar = sol.pstar
+        # end
+
+        # println(" residuals: \n")
+        # map(x -> @printf(" %.3e",x), f_val(pstar))
+        # println("\n")
+
     else
         pstar = log( ϵ/(ϵ-1) * w ./ z_vals )
     end
@@ -160,7 +181,7 @@ function bellman_rhs_eval_v!(V::Array{Float64,2}, fcoll::FirmColloc, sol::FirmSo
 
     #== Adjust/nAdjust decision ==#
     ξstar = ( V[:,1] - V[:,2] ) / w
-    ξstar[ξstar.>ξbar] = ξbar
+    ξstar = min(max(ξstar,ξ0), ξbar)
 
     #== Value beggining period (before taking ξ) ==#
     V[:,3] = ( H(ξstar) .* V[:,1] - w * cond_mean(ξstar) ) + ( 1-H(ξstar) ) .* V[:,2]
@@ -170,6 +191,109 @@ function bellman_rhs_eval_v!(V::Array{Float64,2}, fcoll::FirmColloc, sol::FirmSo
     copy!(sol.ξstar, ξstar )
 
     return nothing
+end
+
+"""
+    Get ξ, v at an arbitrary grid for relative prices. Used to back out ξ for the distribution
+"""
+function get_xi_at{T<:Real}(p_nodes::Vector{Float64}, eval_v̂::Function, pᵃ::Array{Float64}, w::T, Y::T, Y_pri::T=Y, Π_pri::T = 1.0, z_aggr::T=0.0)
+
+    @getPar __pars
+
+    #== Indices ==#
+    grid_nodes = gridmake(p_nodes, 1:n_z)             ##  WARN:  index for z_vals     ##
+
+    # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+    ##  WARN WARN:  Don't do the maximization          ##
+    ##              ONLY check the foc holds at equil  ##
+    #== CHECK foc ==#
+    # @code_warntype foc_price_adjust_eval_v(sol.pstar, eval_v̂, w, Y, Y_pri, Π_pri, z_aggr)
+    # foc_resid = foc_price_adjust_eval_v(sol.pstar, eval_v̂, w, Y, Y_pri, Π_pri, z_aggr)
+    # maxabs(foc_resid)<1e-8 || throw(error("foc error of $(maxabs(foc_resid))"))
+    # @assert maxabs(foc_resid)<1e-8
+
+    # ##  WARN:  CHECK if code is Dual  ##
+    # if eltype(foc_resid)<:ForwardDiff.Dual
+    #
+    #     ##  Perturb policy  ##
+    #     # @code_warntype soc_price_adjust_eval_v(sol.pstar, eval_v̂, w.value, Y.value, Y_pri.value, Π_pri.value)
+    #     J = soc_price_adjust_eval_v(sol.pstar, eval_v̂, w.value, Y.value, Y_pri.value, Π_pri.value)
+    #     # soc = Float64[ J[i,i].values for i =1:size(J,1) ]
+    #
+    #     ##  IMPORTANT : Implicit Function Theorem  ##
+    #     ##              used just the value for the soc  ##
+    #     dpdx  = - foc_resid ./ value(diag(J))
+    #     pstar = T[ForwardDiff.Dual(sol.pstar[i], dpdx[i].partials ) for i =1:n_z]
+    # else
+    #     pstar = copy(sol.pstar)
+    # end
+
+    #== Initiliaze V ==#
+    V = Array(T, size(grid_nodes,1), 2) ##  NOTE: allowing V to hold type T elements
+
+    #== Compute Value function in case of adjustment ==#
+    value_adjust_eval_v!(V, pᵃ, eval_v̂, w, Y, Y_pri, Π_pri, z_aggr)  ##  NOTE: I am using the ENVELOPE here  ##
+
+    #== Compute Value function in case NO adjustment ==#
+    value_nadjust_eval_v!(V, eval_v̂, grid_nodes, w, Y, Y_pri, Π_pri, z_aggr)
+
+    #== Adjust/nAdjust decision ==#
+    ξstar::Vector{T} = ( V[:,1] - V[:,2] ) / w
+    ξstar = min(max(ξstar,ξ0), ξbar)
+
+    #== Value beggining period (before taking ξ) ==#
+    Ve::Vector{T} = ( H(ξstar) .* V[:,1] - w * cond_mean(ξstar) ) + ( 1-H(ξstar) ) .* V[:,2]
+
+    ##  WARN WARN:  code     ##
+
+    return ξstar, Ve
+end
+
+
+"""
+    Evaluates the foc at vector p̃
+
+### Arguments
+
+    - `p̃`                   vector of rel prices (in log) WARN
+    - `v̂_fun::Function`     function with continuation value
+    - `w`                   wage
+    - `Y`                   output
+
+IMPORTANT: REMEMBER that p̃ stands for log p in the notes
+"""
+function foc_price_adjust_eval_v{T<:Real}(p̃::Vector{T}, v̂_fun::Function, w::T, Y::T, Y_pri::T=Y, Π_pri::T=1.0, z_aggr::T=0.0)
+
+    @getPar __pars
+    # .....................................................................................
+    ∂v̂::Vector{T} = v̂_fun( p̃[ind_z_x_z[:,2]] - log(Π_pri), ind_z_x_z[:,1], 1 ) # including effect of inflation/ order of derivative at end
+    E∂v̂ = row_kron( eye(n_z) , Π_z ) * ∂v̂
+
+    resid = Y * exp(p̃) - ϵ * Y * ( exp(p̃) - w./(exp(z_aggr)*z_vals) ) + β * (Y_pri/Y)^(-σ) * exp( ϵ * p̃) .* ( E∂v̂ )
+
+    return resid
+end
+
+function soc_price_adjust_eval_v(p̃::Vector{Float64}, v̂::Function, w::Float64, Y::Float64, Y_pri::Float64=Y, Π_pri::Float64=1.0)
+
+    @getPar __pars
+
+    ∂v̂  = v̂( p̃[ind_z_x_z[:,2]] - log(Π_pri), ind_z_x_z[:,1], 1 )
+    ∂²v̂ = v̂( p̃[ind_z_x_z[:,2]] - log(Π_pri), ind_z_x_z[:,1], 2 )
+
+    E∂v̂  = row_kron( eye(n_z) , Π_z ) * ∂v̂
+    E∂²v̂ = row_kron( eye(n_z) , Π_z ) * ∂²v̂
+    # .....................................................................................
+
+    J = zeros(eltype(∂v̂), n_z, n_z)
+    for iz =1:n_z
+        J[iz,iz] = Y * (1-ϵ) * exp( p̃[iz]) + β * (Y_pri/Y)^(-σ) *  ϵ * exp( ϵ * p̃[iz]) * E∂v̂[iz]  +
+                        β * (Y_pri/Y)^(-σ) * exp( ϵ * p̃[iz]) * E∂²v̂[iz]
+    end
+
+    return J
+
 end
 
 function bellman_rhs!(V::Array{Float64,2}, fcoll::FirmColloc, sol::FirmSolution, w::Float64, Y::Float64, max::Bool = true)
@@ -240,65 +364,6 @@ function bellman_rhs!(V::Array{Float64,2}, fcoll::FirmColloc, sol::FirmSolution,
 end
 
 
-"""
-Get policies at an arbitrary grid
-"""
-# REVIEW : Check if fnc works as intended
-function get_xi_at{T<:Real}(p_nodes::Vector{Float64}, eval_v̂::Function, pᵃ::Array{Float64}, w::T, Y::T, Y_pri::T=Y, Π_pri::T = 1.0, z_aggr::T=0.0)
-
-    @getPar __pars
-
-    #== Indices ==#
-    grid_nodes = gridmake(p_nodes, 1:n_z)             ##  WARN:  index for z_vals     ##
-
-    # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-    ##  WARN WARN:  Don't do the maximization          ##
-    ##              ONLY check the foc holds at equil  ##
-    #== CHECK foc ==#
-    # @code_warntype foc_price_adjust_eval_v(sol.pstar, eval_v̂, w, Y, Y_pri, Π_pri, z_aggr)
-    # foc_resid = foc_price_adjust_eval_v(sol.pstar, eval_v̂, w, Y, Y_pri, Π_pri, z_aggr)
-    # maxabs(foc_resid)<1e-8 || throw(error("foc error of $(maxabs(foc_resid))"))
-    # @assert maxabs(foc_resid)<1e-8
-
-    # ##  WARN:  CHECK if code is Dual  ##
-    # if eltype(foc_resid)<:ForwardDiff.Dual
-    #
-    #     ##  Perturb policy  ##
-    #     # @code_warntype soc_price_adjust_eval_v(sol.pstar, eval_v̂, w.value, Y.value, Y_pri.value, Π_pri.value)
-    #     J = soc_price_adjust_eval_v(sol.pstar, eval_v̂, w.value, Y.value, Y_pri.value, Π_pri.value)
-    #     # soc = Float64[ J[i,i].values for i =1:size(J,1) ]
-    #
-    #     ##  IMPORTANT : Implicit Function Theorem  ##
-    #     ##              used just the value for the soc  ##
-    #     dpdx  = - foc_resid ./ value(diag(J))
-    #     pstar = T[ForwardDiff.Dual(sol.pstar[i], dpdx[i].partials ) for i =1:n_z]
-    # else
-    #     pstar = copy(sol.pstar)
-    # end
-
-    #== Initiliaze V ==#
-    V = Array(T, size(grid_nodes,1), 2) ##  NOTE: allowing V to hold type T elements
-
-    #== Compute Value function in case of adjustment ==#
-    value_adjust_eval_v!(V, pᵃ, eval_v̂, w, Y, Y_pri, Π_pri, z_aggr)  ##  NOTE: I am using the ENVELOPE here  ##
-
-    #== Compute Value function in case NO adjustment ==#
-    value_nadjust_eval_v!(V, eval_v̂, grid_nodes, w, Y, Y_pri, Π_pri, z_aggr)
-
-    #== Adjust/nAdjust decision ==#
-    ξstar::Vector{T} = ( V[:,1] - V[:,2] ) / w
-    ξstar[ξstar.>ξbar] = ξbar
-
-    #== Value beggining period (before taking ξ) ==#
-    Ve::Vector{T} = ( H(ξstar) .* V[:,1] - w * cond_mean(ξstar) ) + ( 1-H(ξstar) ) .* V[:,2]
-
-    ##  WARN WARN:  code     ##
-
-    return ξstar, Ve
-end
-
-
 function foc_price_adjust!{T<:Real}(resid::Vector{T}, p̃::Vector{T}, w, Y, cv, p_basis, Φ_z, ind_z_x_z)
 
     @getPar __pars
@@ -333,20 +398,6 @@ function foc_price_adjust{T<:Real}(p̃::Vector{T}, w, Y, cv, p_basis, Φ_z, ind_
     return resid
 end
 
-"""
-    IMPORTANT: REMEMBER that p̃ stands for log p in the notes
-"""
-function foc_price_adjust_eval_v{T<:Real}(p̃::Vector{T}, v̂_fun::Function, w::T, Y::T, Y_pri::T=Y, Π_pri::T=1.0, z_aggr::T=0.0)
-
-    @getPar __pars
-    # .....................................................................................
-    ∂v̂::Vector{T} = v̂_fun( p̃[ind_z_x_z[:,2]] - log(Π_pri), ind_z_x_z[:,1], 1 ) # order of derivative at end
-    E∂v̂ = row_kron( eye(n_z) , Π_z ) * ∂v̂
-
-    resid = Y * exp(p̃) - ϵ * Y * ( exp(p̃) - w./(exp(z_aggr)*z_vals) ) + β * (Y_pri/Y)^(-σ) * exp(ϵ * p̃) .* ( E∂v̂ )
-
-    return resid
-end
 
 function soc_price_adjust!{T<:Real}(J::Matrix{T}, p̃::Vector{T}, w, Y, cv, p_basis, Φ_z, ind_z_x_z)
 
@@ -398,25 +449,6 @@ function soc_price_adjust{T<:Real}(p̃::Vector{T}, w, Y, cv, p_basis, Φ_z, ind_
     return J
 end
 
-function soc_price_adjust_eval_v(p̃::Vector{Float64}, v̂::Function, w::Float64, Y::Float64, Y_pri::Float64=Y, Π_pri::Float64=1.0)
-
-    @getPar __pars
-
-    ∂v̂  = v̂( p̃[ind_z_x_z[:,2]] - log(Π_pri), ind_z_x_z[:,1], 1 )
-    ∂²v̂ = v̂( p̃[ind_z_x_z[:,2]] - log(Π_pri), ind_z_x_z[:,1], 2 )
-
-    E∂v̂  = row_kron( eye(n_z) , Π_z ) * ∂v̂
-    E∂²v̂ = row_kron( eye(n_z) , Π_z ) * ∂²v̂
-    # .....................................................................................
-
-    J = zeros(eltype(∂v̂), n_z, n_z)
-    for iz =1:n_z
-        J[iz,iz] = Y * (1-ϵ) * exp( p̃[iz]) + β * (Y_pri/Y)^(-σ) *  ϵ * exp( ϵ * p̃[iz]) * E∂v̂[iz]  +
-                        β * (Y_pri/Y)^(-σ) * exp( ϵ * p̃[iz]) * E∂²v̂[iz]
-    end
-
-    return J
-end
 
 
 # function foc_price_adjust(p̃, z_vals, w,  cv, fcoll, p_basis, Φ_z, ind_z_x_z)

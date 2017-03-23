@@ -64,7 +64,10 @@ function stst_histogram_resid(cp::ConsumerProblem, K::Real, ss_histogram::Union{
 
         ss_histogram.R     = R
         ss_histogram.wage  = wage
-        ss_histogram.Kaggr = Ksupply
+        ss_histogram.capital = Ksupply
+
+        copy!(ss_histogram.xstst, [vHistogram[2:end]; Ksupply; 0.0] )     # [xHistogram, K, ϵ]
+        copy!(ss_histogram.ystst, mΘ )                                    # [Θ]
 
         return Void
     end
@@ -255,7 +258,7 @@ function stst_density_resid(cp::ConsumerProblem, K::Float64, init_moments::Matri
 
         ss_density.R     = R
         ss_density.wage  = wage
-        ss_density.Kaggr = Ksupply
+        ss_density.capital = Ksupply
 
         return Void
     end

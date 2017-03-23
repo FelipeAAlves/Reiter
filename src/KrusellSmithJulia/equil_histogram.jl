@@ -5,55 +5,57 @@ Holds all equilibrium conditions. Used to do the linearization Step
 ### INPUT
 - `Y`       : [X_t, X_{t-1}, η_t, ϵ_{t}]
               Variable X at t, t-1, expectational shocks ans regular shocks
-              where X = [vHistogramDev; Kaggr; dx; vSavingsPar]
+              where X = [vHistogramDev; capital; dx; vSavingsPar]
 - `iVarY`   : index
 
 """
-function equil_histogram{T<:Real}(Y::Vector{T}, iVarY::Dict, ss::StstHistogram, cp::ConsumerProblem)
+function equil_histogram{T<:Real}(Y::Vector{T}, iZvar::Dict, ss::StstHistogram, cp::ConsumerProblem)
 
     #== Extract variables ==#
-    X::Vector{T}     = Y[ iVarY[:X]    ]
-    Xlag::Vector{T}  = Y[ iVarY[:Xlag] ]
-    eta::Vector{T}   = Y[ iVarY[:eta]  ]
-    eps::Vector{T}   = Y[ iVarY[:eps]  ]
+    x′::Vector{T}   = Y[ iZvar[:x′] ]
+    y′::Vector{T}   = Y[ iZvar[:y′] ]
+    x::Vector{T}    = Y[ iZvar[:x] ]
+    y::Vector{T}    = Y[ iZvar[:y] ]
+    ϵ_shocks::Vector{T}    = Y[ iZvar[:eps]  ]
 
     #== Create fnc to unpack ==#
-    vHistogram, Θ, dz, KAggr             = unpack_histogram(X,ss)
-    vHistogramlag, Θlag, dzlag, KAggrlag = unpack_histogram(Xlag,ss)
-
+    vHistogram′, K′, dZ′  = unpack_x(x′,ss.ixvar)
+    vHistogram , K , dZ   = unpack_x(x ,ss.ixvar)
+    Θ′ = y′;
+    Θ  = y ;
     #== Recover PRICES ==#
-    R      = 1 + netintr(KAggr, dz);
-    wage   = wagefunc(KAggr, dz);
+    R      = 1 + netintr(K, dZ);
+    wage   = wagefunc(K, dZ);
 
-    Rlag      = 1 + netintr(KAggrlag, dzlag);
-    wagelag   = wagefunc(KAggrlag, dzlag);
+    R′      = 1 + netintr(K′ , dZ′ - σz * ϵ_shocks[1]);
+    wage′   =     wagefunc(K′, dZ′ - σz * ϵ_shocks[1]);
 
     # ******************************************************************
     #   EQUATIONS
     # ==================================================================
 
+    ## Equation Household policy rules  ##
+    resC = eulerres( Θ, Θ′, R, R′, wage, wage′, cp)
 
     ## Equation Dynamics of distribution of wealth ##
-    Πaggr = forward_mat(cp, Θlag)
+    Πaggr = forward_mat(cp, Θ)
 
-    vHistogram_lom = Πaggr * vHistogramlag
+    vHistogram_lom = Πaggr * vHistogram
 
-    resD = distr2x(vHistogram_lom, ss.vHistogram) - distr2x(vHistogram, ss.vHistogram)
+    resD = distr2x(vHistogram′) - distr2x(vHistogram_lom)
 
     ## Equation Exogenoous Shocks ##
-    resZ = dz - ρz * dzlag - σz * eps
+    resZ = dZ′ - ρz * dZ - σz * ϵ_shocks[1]
 
-    ## Equation Aggregate Capital  ##
-    resK = KAggr - expect_k(vHistogram, cp);
-
-    ## Equation Household policy rules  ##
-    resC = eulerres( Θlag, Θ, Rlag, R, wagelag, wage, cp) + eta
+    ## Equation Aggregate Capital  - WARN make it end of period capital (otherwise, problem with the state) ##
+    resK = K′ - expect_k(vHistogram′, cp);
 
 
-    resid = [resD;          # Distribution
-             resZ;          # Exogenous shocks
+
+    resid = [resC;          # Household policies
+             resD;          # Distribution
              resK;          # Aggregate capital
-             resC]          # Household policies
+             resZ]          # Exogenous shocks
 
 end
 
@@ -62,41 +64,31 @@ end
 # --------------------------------------------------------------------------------------
 
 """
-Unpack the vector X (variable values) into its
-components (distribution of wealth, policy rule parameters, aggregate
+Unpack the vector x (variable values) into its
+components (distribution of wealth, aggregate
 variables)
 """
-function unpack_histogram{T<:Real}(X::Vector{T}, ss::StstHistogram)
+function unpack_x{T<:Real}(X::Vector{T}, ixvar::Dict{Symbol,UnitRange{Int64}})
 
     ## HISTOGRAM ##
-    vHistogram = x2distr( X[ss.iXvar[:histogram]], ss.vHistogram );
+    vHistogram = x2distr( X[ ixvar[:histogram] ]);
+
+    ## AGGREGATE Endo VAR ##
+    capital = X[ixvar[:aggr_end]][1];
 
     ## SHOCK ##
-    dz = X[ss.iXvar[:aggr_exo]];
+    dZ = X[ixvar[:aggr_exo]][1];
 
-    ## AGGREGATE VAR ##
-    KAggr = X[ss.iXvar[:aggr_end]];
-
-    ## SavingsPar ##
-    Θ = X[ss.iXvar[:household]];
-
-    return vHistogram, Θ, dz, KAggr
+    return vHistogram, capital, dZ
 end
 
-function x2distr{T<:Real}(vHistogramDev::Vector{T}, vHistogramSs::Vector{Float64})
+function x2distr{T<:Real}(xhistogram::Vector{T})
 
-    vHistogram = Array(T, length(vHistogramSs) )
-    vHistogram[:]  = vHistogramSs + [-sum(vHistogramDev); vHistogramDev]
+    vHistogram = Array(T, length(xhistogram)+1 )
+    copy!(vHistogram, [1.0-sum(xhistogram); xhistogram])
 end
 
-function x2distr!{T<:Real}(vHistogram::Vector{T}, vHistogramDev::Vector{T}, vHistogramSs::Vector{Float64})
+function distr2x{T<:Real}(vHistogram::Vector{T})
 
-    copy!(vHistogram,vHistogramSs + [-sum(vHistogramDev); vHistogramDev])
-end
-
-function distr2x{T<:Real}(vHistogram::Vector{T}, vHistogramSs::Vector{Float64})
-
-    vHistogramDev = vHistogram - vHistogramSs
-
-    return vHistogramDev[2:end]
+    return vHistogram[2:end]
 end

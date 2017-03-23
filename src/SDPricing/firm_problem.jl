@@ -1,6 +1,6 @@
 
-"""
-    Holds information on collocation structure of the problem
+"""_
+Holds information on collocation structure of the problem
 
 ### Fields
 - `basis`   :
@@ -12,7 +12,11 @@
 - `Φ`         :
 - `Φ_fac`     :
 
-
+- `p_nodes` : in logs
+- `n_coll_p`
+- `z_nodes`
+- `n_coll_z`
+- `grid_nodes`
 """
 immutable FirmColloc{BF<:BasisFamily,BP<:BasisParams}
 
@@ -47,19 +51,20 @@ end
 function FirmColloc{BF<:BasisFamily}(::Type{BF})
 
     ##  WARN:  CARAFUL with construction     ##
-    ## [ p_1 z_1]
-    ## [ p_2 z_1]
-    ## [ p_3 z_1]
-    ## [ p_1 z_2]
-    ## [ p_2 z_2]
-    ## [ p_3 z_2]
+    ##   gridmake(p_nodes, z_nodes) will generate
+    ##      [ p_1 z_1]
+    ##      [ p_2 z_1]
+    ##      [ p_3 z_1]
+    ##      [ p_1 z_2]
+    ##      [ p_2 z_2]
+    ##      [ p_3 z_2]
     @getPar __pars
     println(β)
 
     #== Collocation Grids ==#
     n_p = 30
-    w_guess_high = 1.75;
-    w_guess_low  = 0.5;
+    w_guess_high = 0.90;
+    w_guess_low  = 0.70;
     p_low   = w_guess_low / z_vals[end]
     p_high  = 1.1 * ϵ/(ϵ-1) * (w_guess_high/ z_vals[1])
     p_grid = collect( linspace(log( p_low ),log( p_high ),n_p) )
@@ -89,6 +94,13 @@ function FirmColloc{BF<:BasisFamily}(::Type{BF})
     p_nodes, n_coll_p, z_nodes, n_coll_z, grid_nodes)
 end
 
+"""
+Intends to hold the solution of the PROBLEM
+### Fields
+- `coeff` : coeff for the value function
+- `pstar` : optimal price in case of adjustment
+- `ξstar` :
+"""
 immutable FirmSolution
     ##  STEADY-STATE solutions  ##
     coeff::Array{Float64,2}
@@ -110,10 +122,9 @@ end
 
 
 """
-Holds information on the steady-state
-
+    Holds information on the steady-state
 """
-# Observation: Let it be type to facilitate update in steady-state fnc
+# Observation: Let it be type and not immutable to facilitate UPDATE in steady-state fnc
 type StstHistogram
 
     ## Grid ##
@@ -130,6 +141,9 @@ type StstHistogram
     ystst::Vector{Float64}
     ixvar::Dict{Symbol,UnitRange{Int64}}
     iyvar::Dict{Symbol,UnitRange{Int64}}
+
+    iZvar::Dict{Symbol,UnitRange{Int64}}
+    Zstst::Vector{Float64}
 
     ##  Auxiliary  ##
     χ::Float64
@@ -152,7 +166,7 @@ function StstHistogram(fcoll::FirmColloc)
     vHistogram = zeros(nHistogram)
     mHistogram = zeros(length(p_hist_nodes), n_z)
 
-    ###  Create the Dicitionary IMPORTANT ###
+    ###  Create the Dicitionary for x,y ###
     # *************************************************************************************
     ixvar = Dict{Symbol,UnitRange{Int64}}()
     iyvar = Dict{Symbol,UnitRange{Int64}}()
@@ -160,7 +174,7 @@ function StstHistogram(fcoll::FirmColloc)
     ##  CASE:  State variables  ##
     nx = 0
     # ixvar[:endo_aggr]  = nn:5;                                 nn += 5;
-    ixvar[:histogram] = nx+1:nx+(nHistogram-1);   nx += (nHistogram-1)
+    ixvar[:histogram] = nx+1:nx+(nHistogram-1);   nx += (nHistogram-1)  # WARN : histogram - 1
     ixvar[:exog_aggr] = nx+1:nx+2;                nx += 2;              # [Z_t, ϵ_i]
 
     ##  CASE:  controls  ##
@@ -170,7 +184,27 @@ function StstHistogram(fcoll::FirmColloc)
     iyvar[:foc]       = ny+1:ny+(n_z);                     ny += (n_z)
     # -------------------------------------------------------------------------------------
 
-    StstHistogram(p_hist_nodes, z_hist_nodes, hist_nodes, vHistogram, mHistogram, Array(Float64,nx), Array(Float64,ny), ixvar, iyvar, 0.0)
+    ###  Create the Dicitionary for Z  ###
+    # **************************************************************************************
+    iZvar = Dict{Symbol, UnitRange{Int64}}()
+
+    nExog = 2
+    # nEta  = length(fcoll.grid_nodes[:,1]) + length(ss_histogram.vHistogram) + n_z
+
+    #== iZvar ==#
+    iZvar[:y′]    = 1:ny
+    iZvar[:x′]    = ny+1:ny+nx
+
+    iZvar[:y] = (nx+ny) + (iZvar[:y′])
+    iZvar[:x] = (nx+ny) + (iZvar[:x′])
+    nn = 2*(nx+ny)
+
+    iZvar[:eps] = nn+1:nn+nExog
+    # -------------------------------------------------------------------------------------
+
+    StstHistogram(p_hist_nodes, z_hist_nodes, hist_nodes, vHistogram, mHistogram,
+        Array(Float64,nx), Array(Float64,ny), ixvar, iyvar,
+        iZvar, Array(Float64,2*(nx+ny)+nExog), 0.0)
 end
 
 function BasisMatrices.nodes(ss_histogram::StstHistogram)

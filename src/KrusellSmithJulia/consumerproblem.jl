@@ -97,8 +97,8 @@ function ConsumerProblem()
     #AssetsMin = aabar;  AssetsMax = 5;
 
     # number of grid points for each shock:
-    nSavingsPar    = 120;                      # policy function; default = 80-160
-    nAssetsFine    = 200;                     # finer grid     ; default = 75-100
+    nSavingsPar    = 120;                       # policy function; default = 80-160
+    nAssetsFine    = 200;                       # finer grid     ; default = 75-100
                                                 #       bigger values perform even worst during linearization
                                                 #       bc what changes is only the weigth bet adjancent points but not the POINT where I go
     # APPROXIMATION of density
@@ -185,13 +185,19 @@ type StstHistogram
     ##  Aggregates  ##
     R::Float64
     wage::Float64
-    Kaggr::Float64
+    capital::Float64
 
     ##  Dictionary  ##
-    iXvar::Dict{Symbol,Union{UnitRange{Int64}, Int64}}
+    xstst::Vector{Float64}
+    ystst::Vector{Float64}
+    ixvar::Dict{Symbol,UnitRange{Int64}}
+    iyvar::Dict{Symbol,UnitRange{Int64}}
+
 end
+# Observation: Let it be type to facilitate UPDATE in steady-state fnc
+
 """
-Constructor for type StstHistogram
+  Constructor for type StstHistogram
 """
 function StstHistogram(cp::ConsumerProblem)
 
@@ -206,16 +212,20 @@ function StstHistogram(cp::ConsumerProblem)
 
     ###  Create the Dicitionary IMPORTANT ###
     # *************************************************************************************
-    iXvar = Dict{Symbol,Union{UnitRange{Int64}, Int64}}()
+    ixvar = Dict{Symbol,UnitRange{Int64}}()
+    iyvar = Dict{Symbol,UnitRange{Int64}}()
 
-    nn = 0
-    iXvar[:histogram] = 1:(nHistogram-1);                      nn = (nHistogram-1)
-    iXvar[:aggr_exo]  = nn+1;
-    iXvar[:aggr_end]  = nn+2;                                  nn = nn+2;
-    iXvar[:household] = nn+1:nn+length(mΘ);
+    ##  CASE:  State variables  ##
+    nx = 0
+    ixvar[:histogram] = 1:(nHistogram-1);                      nx = (nHistogram-1)
+    ixvar[:aggr_end]  = nx+1:nx+1;
+    ixvar[:aggr_exo]  = nx+2:nx+2;
+    nx += 2
+    ##  CASE:  controls  ##
+    iyvar[:household] = 1:length(mΘ);                         ny = length(mΘ)
     # -------------------------------------------------------------------------------------
 
-    StstHistogram(mΘ, vHistogram, mHistogram, 1.0, 0.0, 0.0, iXvar)
+    StstHistogram(mΘ, vHistogram, mHistogram, 1.0, 0.0, 0.0, Array(Float64,nx), Array(Float64,ny), ixvar, iyvar)
 end
 
 """
@@ -237,10 +247,10 @@ type StstDensity
     ##  Aggregates  ##
     R::Float64
     wage::Float64
-    Kaggr::Float64
+    capital::Float64
 
     ##  Dictionary  ##
-    iXvar::Dict{Symbol,Union{UnitRange{Int64}, Int64}}
+    iXvar::Dict{Symbol,UnitRange{Int64}}
 end
 """
 Constructor for type StstDensity
@@ -261,8 +271,9 @@ function StstDensity(cp::ConsumerProblem)
 
     nn = 0
     iXvar[:density] = 1:(2*nMoments+1);                      nn = 2*nMoments+1
-    iXvar[:aggr_exo]  = nn+1;
-    iXvar[:aggr_end]  = nn+2;                                nn = nn+2;
+    iXvar[:aggr_end]  = nn+1:nn+1;
+    iXvar[:aggr_exo]  = nn+2:nn+2;
+    nn = nn+2;
     iXvar[:household] = nn+1:nn+length(mΘ);
     # -------------------------------------------------------------------------------------
 

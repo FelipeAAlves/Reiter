@@ -1,70 +1,29 @@
-# computes Jacobian by forward differences
-# Input:
-# func: string, name of function
-# x: point at which to take Jacobian
-#    if function value at x is already known, then give x={starting point, function value}
-# step: scalar, relative stepwidth;
-# more arguments will be passed on to the function;
-#
-function jacob(func,x,step);
-  f0 = func(x);
-  n = length(x);
-  m = length(f0);
-  jac = zeros(m,n);
-  x0 = copy(x);
-  for i=1:n
-    step2 = step*max(1,abs(x0[i]));
-    y = copy(x0);
-    y[i] = x0[i] + step2;
-    jac[1:m,i] = (func(y) - f0)/step2;
-  end;
-  return jac;
-end;
-# compute Jacobian by central differences:
-function jacobCentral(func,x,step)
-  f0 = func(x);
-  n = length(x);
-  m = length(f0);
-  jac = zeros(m,n);
-  x0 = copy(x);
-  for i=1:n
-    step2 = step*max(1,abs(x0[i]));
-    y = copy(x0);
-    y[i] = x0[i] + step2;
-    fUpp = func(y)
-    y[i] = x0[i] - step2;
-    fLow = func(y)
-    jac[1:m,i] = (fUpp-fLow)/(2*step2);
-  end;
-  return jac;
-end;
-
-
 
 broydn_init_B = [];
 broydn_out_B = [];
 broydn_output_file = "C:\\Users\\falves\\Git\\Reiter\\src\\tools\\broydn_output.dat"; # []
 
 
-# """
-# Broydn's method to solve system of nonlinear equations
-# ### INPUT:
-# - `fname`:  name of vector function that should be set to zero
-# - `xold` :   starting value for parameters
-# - `opts` :   a vector of options; this can be empty, then just default values are taken;
-#             otherwise:
-#             opts[1]: tolerance level on function value (should be around 10^(-6))
-#             opts[2]: 1 if Jacobian through automatic differentiation
-#                (class deriv1) should be used, zero otherwise
-#             opts[3]: 1 if output on iterations is desired
-#             opts[4]: steplength for forward difference Jacobian, if used (should be around 10^(-5))
-# - `dfname`
-# ### OUTPUT:
-# - `x`:      parameter vector that solves the system
-# - `check`:  0 if ok, 1 if there is some problem (no solution found)
-# The function fname should set the first element of its return vector to
-# 1e100 in order to indicate overflow.
-# """
+"""
+Broydn's method to solve system of nonlinear equations
+
+### INPUT:
+    - `fname`:  name of vector function that should be set to zero
+    - `xold` :  starting value for parameters
+    - `opts` :  a vector of options; this can be empty, then just default values are taken;
+            otherwise:
+        * `opts[1]`: tolerance level on function value (should be around 10^(-6))
+        * `opts[2]`: 1 if Jacobian through automatic differentiation (class deriv1) should be used, zero otherwise
+        * `opts[3]`: 1 if output on iterations is desired
+        * `opts[4]`: steplength for forward difference Jacobian, if used (should be around 10^(-5))
+    - `dfname` : computes the jacobian
+
+### OUTPUT:
+    - `x`:      parameter vector that solves the system
+    - `check`:  0 if ok, 1 if there is some problem (no solution found)
+
+The function fname should set the first element of its return vector to 1e100 in order to indicate overflow.
+"""
 function broydn(fname, xold, opts, dfname=x->x);
     global broydn_init_B;
     global broydn_output_file;
@@ -354,7 +313,7 @@ function broydnUnscaled(fname,xold,opts,dfname=x->x);
     end
     if(iprint>0)
       print(txt)
-      if(!isempty(broydn_output_file))
+      if (!isempty(broydn_output_file))
         FF = open(broydn_output_file,"a");
         print(FF,txt);
         if(iprint>2)
@@ -860,3 +819,45 @@ function fsolve_trust(f,df,x0::Array{Float64,1}, DeltaBar::Float64, TOLF::Float6
   # error("not converged in fsolve");
   return (x,1); # never get here
 end
+
+
+# computes Jacobian by forward differences
+# Input:
+# func: string, name of function
+# x: point at which to take Jacobian
+#    if function value at x is already known, then give x={starting point, function value}
+# step: scalar, relative stepwidth;
+# more arguments will be passed on to the function;
+#
+function jacob(func,x,step);
+  f0 = func(x);
+  n = length(x);
+  m = length(f0);
+  jac = zeros(m,n);
+  x0 = copy(x);
+  for i=1:n
+    step2 = step*max(1,abs(x0[i]));
+    y = copy(x0);
+    y[i] = x0[i] + step2;
+    jac[1:m,i] = (func(y) - f0)/step2;
+  end;
+  return jac;
+end;
+# compute Jacobian by central differences:
+function jacobCentral(func,x,step)
+  f0 = func(x);
+  n = length(x);
+  m = length(f0);
+  jac = zeros(m,n);
+  x0 = copy(x);
+  for i=1:n
+    step2 = step*max(1,abs(x0[i]));
+    y = copy(x0);
+    y[i] = x0[i] + step2;
+    fUpp = func(y)
+    y[i] = x0[i] - step2;
+    fLow = func(y)
+    jac[1:m,i] = (fUpp-fLow)/(2*step2);
+  end;
+  return jac;
+end;

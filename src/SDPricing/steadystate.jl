@@ -4,6 +4,9 @@ The law of motion for histogram is done as in Young (2010);
 
 ### INPUT
 
+- `w`: wage
+- `Y`: output
+
 """
 function stst_histogram_resid(w::Float64, Y::Float64, ss_histogram::StstHistogram, fcoll::FirmColloc, sol::FirmSolution, update_ss::Bool=false)
 
@@ -17,7 +20,7 @@ function stst_histogram_resid(w::Float64, Y::Float64, ss_histogram::StstHistogra
     #=======================================================#
     @printf("   - Inner loop (Policy) \n")
 
-    #== Save and reshape solution ==#
+    #== Solve firm's policy ==#
     @time solve_firm_policy!(fcoll, sol, w, Y)
 
     #== TO compute eval_v̂ ==#
@@ -102,8 +105,12 @@ function stst_histogram_resid(w::Float64, Y::Float64, ss_histogram::StstHistogra
         z_ind::Vector{Int64} = fcoll.grid_nodes[:,2]
         Ve_bellman = eval_v̂(x,z_ind)
 
-        ss_histogram.xstst = [vHistogram[2:end]; 0.0; 0.0]                      # [vHistogram, Z, ϵ]
-        ss_histogram.ystst = [Y;Nstst; 1/β-1.0; 1.0; w; Ve_bellman; sol.pstar]  # [Y_t, N_t, i_t, Π_t, w_t, Ve, pᵃ]
+        xstst = [vHistogram[2:end]; 0.0; 0.0]                      # [vHistogram[2:end], Z, ϵ]
+        ystst = [Y;Nstst; 1/β-1.0; 1.0; w; Ve_bellman; sol.pstar]  # [Y_t, N_t, i_t, Π_t, w_t, Ve, pᵃ]
+        ss_histogram.xstst = xstst
+        ss_histogram.ystst = ystst
+        ss_histogram.Zstst = [ystst; xstst; ystst; xstst; 0; 0]
+
         ss_histogram.χ = Y^(-σ)*w/(Nstst^(1/ϕ)); # set the χ
         return Void
     else
@@ -114,7 +121,6 @@ end
 
 """
     Price fnc definition
-
 """
 function pricing_fnc{T<:Real}(hist_nodes::Array{Float64}, pᵃ::Vector{T}, ξstar::Vector{T}, vHistogram_begin::Vector{T}, p_histogram_end::Vector{T}, verify::Bool = true)
 

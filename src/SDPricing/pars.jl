@@ -21,6 +21,7 @@ type StrucParameters
     σ_z::Float64
 
     ##  Menu Cost  ##
+    ξ0::Float64
     ξbar::Float64
     H::Function
     cond_mean::Function
@@ -49,11 +50,12 @@ function SetParameters()
     ρ_z = 0.96
     σ_z = 0.01
 
-    ξbar = 2.5
-    H(ξ) = 1.0/( ξbar - 0.0 )*(ξ - 0.0)
-    cond_mean(ξ) = 1/(2*ξbar) * (ξ.^2)
+    ξbar = 0.10 #2.5
+    ξ0   = 0.09
+    H(ξ) = 1.0/( ξbar - ξ0 )*(ξ - ξ0)
+    cond_mean(ξ) = 1/(2*(ξbar-ξ0)) * (ξ.^2 - ξ0^2)
 
-    StrucParameters(β, ϵ, σ, ϕ, phi_taylor, 1.0/3, n_z, Π_z, z_vals, ind_z_x_z, σ_ii, ρ_z, σ_z, ξbar, H, cond_mean)
+    StrucParameters(β, ϵ, σ, ϕ, phi_taylor, 1.0/3, n_z, Π_z, z_vals, ind_z_x_z, σ_ii, ρ_z, σ_z, ξ0, ξbar, H, cond_mean)
 end
 
 macro getPar(P)
@@ -75,6 +77,7 @@ macro getPar(P)
       ρ_z = $P.ρ_z
       σ_z = $P.σ_z
 
+      ξ0 = $P.ξ0
       ξbar = $P.ξbar
       H = $P.H
       cond_mean = $P.cond_mean

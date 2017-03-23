@@ -5,13 +5,15 @@
 %
 % NOTE : BUILD with latexmk 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\documentclass[a4paper,11pt]{article}  %scrartcl
+\documentclass[a4paper,10pt]{article}  %scrartcl
 
 \input{C:/Users/falves/Dropbox/TexFolder/preamble.tex} 
-%% Aditional packaged
-\usepackage{empheq,minted}
 
-\title{Solving Krussel-Smith economy\vspace{-4em}}
+%% Aditional packaged
+\usepackage[ntheorem]{empheq}
+\usepackage{minted} % HOW to compile with the minted option??
+
+\title{User Guide 01 - Krusell-Smith \vspace{-1.00em}}
 % {
 %         \vspace{-0in
 %         \usefont{OT1}{bch}{b}{n}
@@ -20,11 +22,11 @@
 %         \huge Referee report on ``Learning, Confidence, and Business Cycles''  \[-0.5cm]
 %         \horrule{2pt} \[-0.5cm]
 % }
-% \author{\
-%         \normalfont \normalsize Felipe Alves \[-3pt]       \normalsize
-%         \today
-% }
-\date{}
+\author{
+        \normalfont\large Felipe Alves \\[-2.5pt]       \normalsize
+        \today
+}
+\date{ \vspace{-3em} }
 
 % *************************************************************************************************************
 % ************************************************                *********************************************
@@ -35,14 +37,16 @@
 \maketitle
 
 \begin{abstract}
-
+   These notes presents an step-by-step on Reiter's Projection+Perturbation approach to solve Heterogeneous Agents model with aggregate
+   uncertainty. The method is discussed on the context of \citet{krusell_smith} model. The presentation draws heavily on
+   \citet{winberry}, although the implementation differs on some relevant aspects.
 \end{abstract}
 
 %**************************************************************************************************************************
 %%%%%%% INTODUCTION
 %--------------------------------------------------------------------------------------------------------------------------
-\section{Intoduction} % (fold)
-\label{sec:intoduction}
+% \section{Intoduction} % (fold)
+% \label{sec:intoduction}
 
 % SECTION INTODUCTION (END)
 %..........................................................................................................................
@@ -136,13 +140,13 @@ where $ \delta $ is the depreciation rate. Aggregate TFP follows an AR(1) proces
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \textbf{Equilibrium} \\
-A \textbf{Recursive Competitive Equilibrium} is a list of functions
+A \textbf{Recursive Competitive Equilibrium} is a list of functions 
 \[
    \Big\{
    c\big( a,\epsilon ; z, \mu \big) ,a'\big( a,\epsilon ; z, \mu \big),
    r\big( z,\mu \big), w\big( z,\mu \big),
    \Psi (\mu,z)
-   \Big\}
+   \Big\} 
 \]
 \begin{enumerate}
    %%
@@ -446,6 +450,8 @@ where $f$ is given by in the case we choose to represent the distribution by his
    ( 1+r ) a_{i, \epsilon} + w \tau ( \epsilon ) ,
    \qquad i =1, \ldots, n_s \text{ and } \epsilon \in E \\
 \end{empheq}
+{\color{RubineRed} \textsc{Important}:} It is crucial to have the consistency condition in terms of next period assets.
+Problems with stable/unstable roots otherwise. 
 % subsection finite_dimensional_approximation (end)
 %..........................................................................................................................
 
@@ -581,22 +587,59 @@ ADD simple example on the jupyter \ldots
 \subsection{Solving Linearized System} % (fold)
 \label{sub:solving_linearized_system}
 
-Call $X\defeq (\mathbf{x}; \mathbf{y})$ we can linearize \eqref{eq:SYSTEM} into a linear
-representation of the form
+
+\paragraph{Klein method.}
+Linearizing \eqref{eq:SYSTEM} around the steady-state yields a first-order linear expectational difference equation
+system of the form
+%%%
+\begin{equation}
+   \label{eq:linearized_equil_conditions}
+   f_{ \mathbf{y}' } E_t \Big[ \underbrace{ ( \mathbf{y}_{t+1} -  \bar{\mathbf{y}}) }_{ \tilde{\mathbf{y}}_{t+1} } \Big] 
+   + f_{ \mathbf{y} }   \tilde{\mathbf{y}}_t  
+   + f_{ \mathbf{x}' }  E_t \Big[  \tilde{\mathbf{x}}_{t+1} \Big]
+   + f_{ \mathbf{x} }   \tilde{\mathbf{x}}_{t}
+   = 0
+\end{equation}
+%%%
+which can be set on Klein's form letting $ \Gamma_0 \defeq \big[f_{ \mathbf{x}' } \quad f_{ \mathbf{y}' } \big] $  and
+$ \Gamma_1 \defeq - \big[f_{ \mathbf{x} } \quad  f_{ \mathbf{y} } \big] $ so that
+%%%
+\begin{equation}
+   \label{eq:klein}
+   \Gamma_0
+   E_t \left\{ 
+         \begin{bmatrix}
+            \mathbf{x}_{t+1} \\ \mathbf{y}_{t+1}
+         \end{bmatrix}
+      \right\} = 
+   \Gamma_1
+   \begin{bmatrix}
+      \mathbf{x}_{t} \\ \mathbf{y}_t 
+   \end{bmatrix}
+\end{equation}
+%%%
+
+\paragraph{Sims method.}
+Let $X_t \defeq ( \tilde{\mathbf{x}}; \ \tilde{\mathbf{y}} )$. To put the model into Sims' format, we need to get rid of
+the expectational terms in
 \begin{equation*}
-   \mathbb{E}_t \Big[ -\Gamma_0 X_{t+1} + \Gamma_1 X_t + \Psi \omega_{t+1} \Big] = 0
+   \Gamma_0 \mathbb{E}_t \Big[ X_{t+1} \Big] = \Gamma_1 X_t
 \end{equation*}
-where
-$ \Gamma_0 = \frac{\partial f }{\partial X'} ( X^*, X^*,0 ), \
-\Gamma_1 = \frac{\partial f }{\partial X} ( X^*, X^*,0 ), \
-\Psi = \frac{\partial f }{\partial \omega'} ( X^*, X^*,0 )$.
-Rewriting forecasted variables as the composition of \emph{ex post} realizations and
-forecast errors we can drop the expectation term and write the system as
+where $ \Gamma_0, \Gamma_1$ are defined as before. To do so we substitute $ E_{t} \big\{X_{t+1}\big\} $ by the
+combination of its \emph{ex post} realizations plus the appropriate forecast errors.\footnote{%
+   For each $y_{i,t+1}$, whenever we have $ E_{t} \big\{ y_{i,t+1} \big\}  $  we substitute to $ y_{i,t+1} - \eta_{i,t+1}$, 
+   where $\eta_{i,t+1} $  are \textbf{endogenous} expectational errors determined as part of the solution.
+   Endogenous states are all pre-determined, so $ E_t\{x_{1,t+1}\} = x_{t+1} $, while exogenous states have exogenous
+   forecast error $ \omega_{t+1} $, so we can write $ E_t \{\mathbf{x}_{2,t+1} \} = \mathbf{x}_{2,t+1} - \omega_{t+1}$
+   }
+Once we do that, we get to Sims' canonical form
 \begin{equation}
    \label{eq:gensys}
-   \Gamma_0 X_t+1 = \Gamma_1 X_{t} + \Pi \eta_{t+1} + \Psi \omega_{t+1}
+   \Gamma_0 X_{t+1} = \Gamma_1 X_{t} +  \Psi \omega_{t+1} + \Pi \eta_{t+1}
 \end{equation}
-which is on the canonical form to be solved using Sim's \texttt{gensys} algorithm.
+which is on Sims' canonical form and can be solved using Sim's \texttt{gensys} algorithm\footnote{
+I actually use a modified version of the gensys algorithm that treats the existence and uniqueness more carefully. The code accompanies the
+\texttt{Reiter.jl}.\}.
 
 % subsection solving_linearized_system (end)
 %..........................................................................................................................
@@ -604,7 +647,6 @@ which is on the canonical form to be solved using Sim's \texttt{gensys} algorith
 % SECTION METHOD (END)
 %..........................................................................................................................
 
-%%% End document
 
 % ============================================================================================================
 %------------------------------------------------ REFERENCE ------------------------------------------------
@@ -616,7 +658,675 @@ which is on the canonical form to be solved using Sim's \texttt{gensys} algorith
 % \bibliography{/Users/Felipe/Dropbox/TexFolder/2nd_year_paper}
 %%%%% PC
 \bibliographystyle{C:/Users/falves/Dropbox/TexFolder/plainnat2}
-\bibliography{C:/Users/falves/Dropbox/TexFolder/2nd_year_paper}
-
+\bibliography{C:/Users/falves/Dropbox/TexFolder/reiter_project}
 
 \end{document}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% End document
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Draft
+% 
+%
+% NOTE : BUILD with latexmk 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\documentclass[a4paper,10pt]{article}  %scrartcl
+
+\input{C:/Users/falves/Dropbox/TexFolder/preamble.tex} 
+
+%% Aditional packaged
+\usepackage[ntheorem]{empheq}
+\usepackage{minted} % HOW to compile with the minted option??
+
+\title{User Guide 01 - Krusell-Smith \vspace{-1.00em}}
+% {
+%         \vspace{-0in
+%         \usefont{OT1}{bch}{b}{n}
+%         \normalfont \normalsize \ \[5pt]
+%         \horrule{0.5pt} \[0.0cm]
+%         \huge Referee report on ``Learning, Confidence, and Business Cycles''  \[-0.5cm]
+%         \horrule{2pt} \[-0.5cm]
+% }
+\author{
+        \normalfont\large Felipe Alves \\[-2.5pt]       \normalsize
+        \today
+}
+\date{ \vspace{-3em} }
+
+% *************************************************************************************************************
+% ************************************************                *********************************************
+% *************************************************************************************************************
+% NOTE : BUILD with latexmk 
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+   These notes presents an step-by-step on Reiter's Projection+Perturbation approach to solve Heterogeneous Agents model with aggregate
+   uncertainty. The method is discussed on the context of \citet{krusell_smith} model. The presentation draws heavily on
+   \citet{winberry}, although the implementation differs on some relevant aspects.
+\end{abstract}
+
+%**************************************************************************************************************************
+%%%%%%% INTODUCTION
+%--------------------------------------------------------------------------------------------------------------------------
+% \section{Intoduction} % (fold)
+% \label{sec:intoduction}
+
+% SECTION INTODUCTION (END)
+%..........................................................................................................................
+
+%**************************************************************************************************************************
+%%%%%%% MODEL
+%--------------------------------------------------------------------------------------------------------------------------
+\section{Model} % (fold)
+\label{sec:model}
+
+\textbf{Households} \quad There is a continuum of households indexed by $ j\in [0,1] $, each with preferences over consumption
+$ c_{jt} $ represented by the utility function
+\begin{equation*}
+   \label{eq:util}
+   \mathbb{E}  \sum_{t=0}^{\infty} \beta^t \frac{ c_{jt}^{1- \sigma} -1}{ 1- \sigma }
+\end{equation*}
+where $ \beta $ is the subjective discount factor and $ \frac{1}{\sigma} $ is the elasticity of intertemporal substitution.
+%
+Each household supplies inelastically $ \epsilon_{jt} $ efficiency units of labor in the labor market at market price $w_t$.
+This idiosyncratic shock is distributed independently across households but for each one particular
+household it follows a two-state Markov process with values $\epsilon \in E\defeq  \big\{ 0,1 \big\} $ and transition probabilities $ \Pi $.
+Therefore households with idiosyncratic shock $ \epsilon_{j,t} = 0 $ don't supply labor but receive
+unemployment benefits in the value of $ bw_t $, while households with $\epsilon_{j,t}=1$ supply their whole unit of efficiency labor
+and enjoy after-tax labor earnings of $ w_t ( 1-\tau ) $.
+
+Asset markets are incomplete.
+Agents have access only to one type of asset with rate of return $r_t$, potentially stochastic
+but independent of the individual state. Moreover, they asset holdings are subject to a borrowing constraint.
+
+
+Therefore, the flow \textbf{budget constraint} at time $t$ reads
+\begin{align*}
+   \label{eq:budget_const}
+   c_{j,t} + a_{j,t+1} & = \Big( 1 + r_t \Big) a_t + w_t \Big( \epsilon_{j,t} ( 1-\tau ) + ( 1-\epsilon_{j,t} )b \Big) \\
+   a_{j,t+1}           & \ge \underline{a}
+\end{align*}
+
+\textbf{State Variables} \
+Before proceeding let's think what are the relevant states for the household problem and define some notation
+while we are at it.
+Idiosyncratic levels of asset holdings and employment shock $ ( a, \epsilon ) $ must be in the state, since they enter
+on the budget constraint. These are the \emph{idiosyncratic states} of the agent. But note that this is not enough.
+
+The price vector $( r_t, w_t )$ also appears on the budget constraint and, in the recursive competitive equilibrium
+definition to be given below, must be themselves a function of the household's state variables.
+The assumptions on supply side make them a function of aggregate capital $K_t$ and technological shock $z$ in equilibrium.
+So why not have $(K_t,z_t)$ themselves in the state?
+
+It turns out that we need to keep track of more than just aggregate capital to compute household's policies.
+Note that when deciding how much to consume/save agents must also predict next period prices distribution - therefore
+next period capital - which in this heterogeneous agent model is not determined only by the aggregate level of present capital stock.
+Since agents with have different savings rates depending on their idiosyncratic states, predicting next period capital
+requires knowledge of the whole distribution of agents over \emph{idiosyncratic states}.
+When we are solving only for a stationary equilibrium, the distribution over \emph{idiosyncratic states} is invariant,
+making aggregate capital and hence prices constant. But in the presence of aggregate shocks, as is the case here,
+aggregate capital and hence the prices will vary which forces household to keep track of the whole distribution
+to be able to predict next period capital/prices.
+%%
+Therefore, the \emph{aggregate states} of household problem are given by $ (z_t, \mu_t ) $ where
+$ \mu_t $ denotes the time $t$ measure of households across individual states.
+
+
+\textbf{Government} \ Government finances unemployment insurance payments by taxing labor earnings with constant tax $\tau$.
+Government's budget constraint is balanced each period implying
+\begin{equation*}
+   \label{eq:gov_budget}
+   \tau \int \mu_t( da,1 ) = b \int \mu_t( da,0 )
+\end{equation*}
+or simply, $ \tau = \frac{b ( 1-L )}{L} $ where $ L \defeq \mu_t( 1, A) $.
+
+\bigskip
+\textbf{Firms} \ There is a representative firm which produces output $ Y_t $ according to the production function
+\begin{equation*}
+   \label{eq:prod_fnc}
+   Y_t = e^{z_t} K_t^{\alpha} L_t^{ 1- \alpha }
+\end{equation*}
+where $ z_t $ is an aggregate productivity shock, $K_t$ is the aggregate capital stock and $ L_t $ is aggregate labor.
+
+In equilibrium, factor prices are determined competitively and given by the marginal products of inputs
+\begin{align*}
+   \label{eq:factor_prices}
+   r_t & = \alpha e^{z_t} K_t^{ \alpha-1 } L_t^{ 1- \alpha } - \delta \\
+   w_t & = ( 1- \alpha ) e^{z_t} K_t^{ \alpha } L_t^{ - \alpha }
+\end{align*}
+%
+where $ \delta $ is the depreciation rate. Aggregate TFP follows an AR(1) process
+\begin{equation}
+   \label{eq:tfp}
+   z_{t+1} = \rho z_t + \sigma_z \omega_{t+1}, \qquad \omega_{t+1} \sim \mathcal{N}( 0,1 )
+\end{equation}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\textbf{Equilibrium} \\
+A \textbf{Recursive Competitive Equilibrium} is a list of functions 
+\[
+   \Big\{
+   c\big( a,\epsilon ; z, \mu \big) ,a'\big( a,\epsilon ; z, \mu \big),
+   r\big( z,\mu \big), w\big( z,\mu \big),
+   \Psi (\mu,z)
+   \Big\} 
+\]
+\begin{enumerate}
+   %%
+   \item ( Household Optimization ) \\
+         Taking price functions $ r(\cdot), w( \cdot ) $ and the law of motion $\Psi(\cdot)$ as given,
+         $ \Big\{ c( a,\epsilon; z, \mu ) , a'( a,\epsilon ; z, \mu ) \Big\}$ must satisfy
+         \begin{align}
+              & c( a, \epsilon ; z,\mu )^{ - \sigma } \ge
+            \beta \mathbb{E} \bigg\{
+            \Big( 1+ \tilde{r} \Big( z', \Psi( z, \mu ) \Big) \Big) c\Big( a'( a, \epsilon; z, \mu ),
+            \epsilon'; z', \Psi( z,\mu ) \Big)^{- \sigma}
+            \bigg\} \label{eq:euler} \\
+              & c( a, \epsilon ; z,\mu ) + a'( a,\epsilon; z, \mu ) = \big( 1 + \tilde{r}(z, \mu ) \big)
+            a + w \big( z, \mu \big) \tau( \epsilon )  \label{eq:budget_constraint}
+         \end{align}
+         with the euler holding with equality if $ a'\big( a, \epsilon; z , \mu \big) > \underline{a} $.
+
+         %%
+   \item ( Firm Optimization ) \\
+         Given price function $ r( \cdot ) , w ( \cdot ) $, firms choose capital $K$ and labor $L$ according to
+         \begin{align}
+            r( z, \mu ) & = \alpha e^{z} K^{ \alpha-1 } L^{ 1- \alpha } - \delta \\
+            w( z, \mu ) & = ( 1- \alpha ) e^{z} K^{ \alpha } L^{ - \alpha }
+         \end{align}
+
+         %%
+   \item ( Market Clearing ) \\~\\
+         Labor market clears:
+         \begin{equation}
+            \label{eq:labor_mkt}
+            L = \int \epsilon \mu( da, d\epsilon )
+         \end{equation}
+         %%%%%
+         Asset market clears:
+         \begin{equation}
+            \label{eq:asset_mkt}
+            K = \int a \mu( da, d \epsilon )
+         \end{equation}
+         %%%%%
+         Good market clear:
+         \begin{equation}
+            \label{eq:asset_mkt}
+            \int c( a, \epsilon ; z, \mu) \mu( da, d \epsilon ) + \int a'( a,\epsilon ; z, \mu) \mu( da, d \epsilon )
+            = \exp{( z )} F( K,L ) + ( 1- \delta ) K
+         \end{equation}
+         %%
+   \item Government budget constraint is satisfied
+
+         %%
+   \item ( Evolution of distribution ) \\
+         For any $ \epsilon' \in E $ and measurable set $ \mathcal{A} \subseteq A $, next period distribution implied by the
+         law of motion $ \Psi $ is consistent with the households' policies
+         \begin{equation}
+            \label{eq:law_of_motion}
+            \Psi( z, \mu ) \Big( \mathcal{A} \times \{\epsilon'\} \Big) = \int
+            %
+            \ \mathbf{1} \Big\{  a'( a, \epsilon; z, \mu ) \in \mathcal{A} \Big\} \ \pi( \epsilon' | \epsilon ) \ \mu( da, d \epsilon )
+            %
+         \end{equation}
+\end{enumerate}
+
+% SECTION MODEL (END)
+%..........................................................................................................................
+
+\newpage
+%**************************************************************************************************************************
+%%%%%%% METHOD
+%--------------------------------------------------------------------------------------------------------------------------
+\section{Method} % (fold)
+\label{sec:method}
+
+At a broad level, the solution method includes three steps
+\begin{enumerate}
+   %%
+   \item Approximate the infinite dimensional equilibrium objects, which in our example involves the
+         policy functions of the household and cross-sectional distribution of individual states, by some
+         finite dimensional object. This allows us to have a finite parametrization of the model that we
+         shall refer to as the \emph{discrete model}.
+
+         %%
+   \item Compute the stationary equilibrium of the \emph{discrete} model. This will take into account
+         the idiosyncratic uncertainty but \textbf{not} the uncertainty coming from aggregate shocks.
+
+         %%
+   \item Linearize the discrete model equations with respect to our finite parametrization around
+         steady-state and compute the rational expectation solution of the linearized system taking into
+         account aggregate shocks.
+\end{enumerate}
+
+%%%%%%% Finite-Dimensional Approximation
+%--------------------------------------------------------------------------------------------------------------------------
+\subsection{Finite-Dimensional Approximation} % (fold)
+\label{sub:finite_dimensional_approximation}
+Looking at the equilibrium definition we see that there are two infinite-dimensional objects that need
+to be approximated if we intend to solve the model using \citet{reiter} method.
+
+First, we need a finite representation of household's individual state distribution. I will offer two
+options here, one that keeps track of histogram defined on finite number of points of the state space and
+another that tries to approximate the distribution by a density function of a finite dimensional family.
+Second, household's decision rules characterized by \eqref{eq:euler} are the solution of an functional equation and
+must also be approximated.
+
+%..........................................................................................................................
+\textbf{Distribution I} \
+The first option comes from \citet{reiter} and involves approximating the distribution of households by a
+finite number of mass points on a predefined grid for $ \mathcal{A} \defeq \big\{ a_j \big\}_{j=1}^{N_a} $ and productivity $E$.
+%%
+Let $ \Phi( a_j, \epsilon ) $ denote the fraction of households with productivity level $ \epsilon $ and
+asset holdings $ a_j $. The evolution of this distribution is implied by the decision rules as follows.
+For any pair $ ( a_{j'}, \epsilon' ) \in \mathcal{A}\times E $, next period mass at the point is given by
+%%
+\begin{equation}
+   \Phi' ( a_{j'}, \epsilon' ) = \sum_{ \epsilon \in E } \pi( \epsilon, \epsilon' )
+   \sum_{ j=1 }^{N_a}
+   \omega_{j,\epsilon, j'}
+   \times  \Phi(a_j, \epsilon) \\
+\end{equation}
+where $\omega_{j,\epsilon, j'}$ is a function of savings of the household
+\begin{equation*}
+   \label{eq:weight}
+   \omega_{j,\epsilon, j'} = \begin{cases}
+   \frac{ a' - a_{j'-1} }{ a_{j'} - a_{j'-1} } & \text{ if }
+   a'( a_j, \epsilon ; z, \mu ) \in \Big[ a_{j'-1}, a_{j'} \Big] \\ \ & \ \\
+   \frac{ a_{j'+1} - a' }{ a_{j'+1} - a_{j'} } & \text{ if }
+   a'( a_j, \epsilon ; z , \mu) \in \Big[ a_{j'}, a_{j'+1} \Big] \\ \ & \ \\
+   0 & \text{o.w.}
+   \end{cases}
+\end{equation*}
+
+\todo[inline]{Here's something I might need to add.}
+% Note that I have already replaced the true aggregate state $ ( z,\mu ) $ with the approximate aggregate state
+% $ ( z, \Phi ) $ in the decision rule of the household.
+
+\textbf{Distribution II} \
+The second alternative follows \citet{winberry} and tries to approximate the distribution over assets
+conditional on a realization of labor productivity $ \epsilon $ - $\mu( da,\epsilon )  $ -
+using the following parametric family
+%%%
+\begin{equation}
+   \label{eq:density}
+   g_{\epsilon} \Big( a ; g_{\epsilon}^0, \big\{ g^i_{\epsilon} ,m^i_{\epsilon}\big\}_{i=1}^{n_g} \Big)
+   = g_{\epsilon}^{0} \exp \left\{
+   g_{\epsilon}^1( a - m^1_{\epsilon} ) +
+   \sum_{i=1}^{n_g} g^1_{\epsilon} \bigg[ ( a - m^1_{\epsilon} )^i - m^i_{\epsilon}\bigg]
+   \right\}
+\end{equation}
+%%%
+where $ n_g $ denotes the order of approximation, $ \big\{ g^i_{\epsilon} \big\}_{i=0}^{n_g}$ are the parameters of the distribution
+which must be consistent with the centralized moments $ \mathbf{m}_{\epsilon} \defeq \big\{ m^i_{\epsilon}\big\}_{i=1}^{n_g} $, that is,
+%%%
+\begin{equation}
+   \label{eq:consitency}
+   %%%
+   \begin{split}
+      m^1_{\epsilon} & = \int a g_{\epsilon}( a ) da                                  \\
+      m^i_{\epsilon} & = \int \big( a-m^1_{\epsilon} \big)^i g_{\epsilon}( a )da 
+   \end{split}
+\end{equation}
+%%%
+
+Turns out that finding a solution of this non-linear system of equation is hard and without
+an good initial guess convergence is uncertain. To solve this issue we follow the suggestion by \citet{algan} and find the coefficients - except for $ g^0_{\epsilon} $ - as the solution to the following minimization problem
+\begin{equation*}
+   \label{eq:min_denscoeff}
+   \min_{ \quad \big\{ \rho_{ \epsilon}^i\big\}_{i=1}^{n_g} } \quad \int g \Big( a; 1, \big\{\rho_{ \epsilon }^i ,m^i_{\epsilon}\big\}_{i=1}^{n_g} \Big) da
+\end{equation*}
+To see that, note that the first order conditions of the problem correspond exactly to consistency conditions
+\eqref{eq:consitency}. Turns out that solving this minimization problem is way easier than solving the system
+\eqref{eq:consitency} and it works even without a good initial condition.
+
+This approximation reduces the infinite-dimensional distribution $\mu$ to a set of moments
+$ \big\{\mathbf{m}_{\epsilon}\big\}_{\epsilon \in E} $. But note that we still need to derive the law of motion
+in terms of this approximate aggregate state. Although current density together with decision rules pin down the
+distribution for next period, the distribution has no reason to be an element of the parametric family
+\eqref{eq:density}.
+That in principle presents us with a problem. But note that our reduced state only requires us to keep track of
+next period moments, from which we can derive next period approximated density through consistency conditions.
+Next period moments in turn are determined as
+%
+\begin{align*}
+   {m_{\epsilon}^1}' & = \sum_{ \tilde{\epsilon} \in E }
+   \frac{ \pi ( \tilde{\epsilon} ) \pi( \tilde{\epsilon}, \epsilon ) }{ \pi( \epsilon ) }
+   \int a'\Big( a, \tilde{\epsilon}; z, \mathbf{m} \Big) g_{ \tilde{\epsilon} }(a) da \\
+   %%%
+   {m_{\epsilon}^i}' & =   \sum_{ \tilde{\epsilon} \in E }
+   \frac{ \pi ( \tilde{\epsilon} ) \pi( \tilde{\epsilon}, \epsilon ) }{ \pi( \epsilon ) }
+   \int \Big( a'\Big( a, \tilde{\epsilon}; z, \mathbf{m} \Big)  - {m_{\epsilon}^1}' \Big)^i g_{ \tilde{\epsilon} }(a) da
+\end{align*}
+%
+In practice, I compute the integrals using a Gauss-Legendre quadrature, which specifies nodes
+$\big\{ a_j \big\}_{j=1}^{n_q}$ and weights $\big\{ \omega_j \big\}_{j=1}^{n_q}$ and replaces the integrals
+with finite sums
+\begin{equation*}
+   \label{eq:aaa}
+   \int a'( a, \tilde{\epsilon}; z, \mathbf{m} ) g_{ \tilde{\epsilon} }(a) da \approx
+   \sum_{j=1}^{n_q} \omega_j a'( a_j, \tilde{\epsilon}; z, \mathbf{m} ) g_{ \tilde{\epsilon} }(a_j)
+\end{equation*}
+%..........................................................................................................................
+
+\textbf{Household Decision Rules}
+
+Optimality conditions in terms of the new (finite-dimensional) aggregate state are given by
+\begin{align*}
+     & c \Big( a, \epsilon; z, \Phi \Big)^{ - \sigma } \ge \beta \mathbb{E}_{z'|z}
+   \Bigg\{
+   \big( 1+\tilde{r}( z', \Phi')  \big)
+   \sum_{ \epsilon' \in E } \pi( \epsilon'| \epsilon )  c \Big( a'( a, \epsilon; z, \Phi ), \epsilon'; z', \Phi' \Big)^{- \sigma}
+   \Bigg\} \\
+     & c\big( a, \epsilon; z, \Phi \big) + a'\big( a, \epsilon; z, \Phi \big) =
+   \big( 1 + r( z, \Phi ) \big) a + w ( z,\Phi ) \tau( \epsilon )
+\end{align*}
+where conditional expectation of future marginal utility has been broken into two pieces: (i) the expectation
+with respect to idiosyncratic shocks is taken explicitly, (ii) expectation with respect to aggregate shocks is only
+implicitly in the expectation operator and will be taken into account only during the perturbation step.
+
+Household's savings behavior is characterized by a critical level of assets $ \chi_{ \epsilon } $
+at which the borrowing constraint starts binding and a smooth function for $ a > \chi_{ \epsilon } $.
+I follow \citet{reiter} and approximate the savings rule by a piecewise linear spline with knot points
+$ a_{ i, \epsilon}  = \chi_{ \epsilon } + x_i , \ i = 1, \ldots, n_s$ with
+$ 0 = x_1 < \ldots < x_{n_s} $.
+
+For a given aggregate state $ ( z, \Phi ) $, household's savings policy is then represented by
+$n_{\epsilon} \times n_s$ coefficients giving for each idiosyncratic shock $ \epsilon $ the critical
+level $ \chi_{\epsilon} $ and savings at $ a_{2, \epsilon}, \ldots, a_{n_s, \epsilon} $
+- note that savings at $ a_{1,\epsilon} $ equals $\underline{a}$ by construction.
+
+These coefficients are collected into the vector $ \boldsymbol{\theta}( z, \Phi ) $ and the approximated
+consumption function is then written as $ \hat{c} \big( a, \epsilon ;\  \bsy{\theta}(z, \Phi) \ \big) $.
+%%%
+Given this approximation choice, household's optimality conditions are approximated using
+collocation, which forces \eqref{eq:euler}-\eqref{eq:budget_constraint} to hold exactly on the set of nodes
+$ \big\{ a_{i, \epsilon }, \epsilon \big\}_{i\in\{1,\ldots, n_s\},\epsilon\in E}$
+\begin{align*}
+     & \hat{c} \Big( a_{i,\epsilon}, \epsilon; \ \bsy{\theta}( z,\Phi ) \ \Big)^{ - \sigma } = \beta \mathbb{E}_{z'|z}
+   \Bigg\{
+   \big( 1 + \tilde{r}( z', \Phi')  \big)
+   \sum_{ \epsilon' \in E } \ \pi( \epsilon'| \epsilon ) \ \hat{c} \Big( \hat{a}'( a_{i,\epsilon}, \epsilon; \ \bsy{\theta}( z,\Phi ) \ ),
+   \epsilon' ; \ \bsy{\theta}( z', \Phi' ) \ \Big)^{- \sigma}
+   \Bigg\} \\
+     & \hat{c} \Big( a_{i,\epsilon}, \epsilon; \ \bsy{\theta}( z,\Phi ) \ \Big) +
+   \hat{a}'\Big( a_{i,\epsilon}, \epsilon; \ \bsy{\theta}( z,\Phi ) \ \Big) =
+   \big( 1 + \tilde{r}( z, \Phi ) \big) a_{i,\epsilon} + w( z, \Phi ) \tau( \epsilon )
+\end{align*}
+
+The notation is intended to make clear how differently we treat the dependence of policy on
+idiosyncratic and aggregate states. Policy dependence on individual states is explicitly consider and
+parametrized by finite-dimensional vector $  \bsy{\theta}(z, \Phi)  $, whose value at steady state
+$\bsy{\theta}^*$ is determined by our collocation scheme. Policy depends on aggregates states only
+insofar as that parametrization varies with $ (z, \Phi) $, and that dependence is solved
+at the perturbation step only.
+
+\begin{quote}
+   Mkcay and Reis: We approximate the policy rules for savings by piece-wise linear splines with
+   100 knot point each. We deal with the borrowing constraint in the approximation of the policy
+   functions by parameterizing the point at which the borrowing constraint starts binding
+\end{quote}
+
+\textbf{Approximate Equilibrium Conditions} \\ Given all these approximations, our definition of the
+\textbf{recursive competitive equilibrium} is reduced to a finite set of equations.
+To collect these conditions using a compact notation define the state vector $ \mathbf{x} = (\Phi,z, K ) $ which contains
+$2 + \big(N_a \times n_{\epsilon} \big)$
+predetermined variables
+and the control vector $ \mathbf{y} = ( \bsy{\theta}, r, w )  $ of size
+$2 +\big(n_s \times n_{\epsilon}\big)$.
+Therefore, the our discrete equilibrium can be resumed by a system of nonlinear equations
+\begin{equation}
+   \label{eq:SYSTEM}
+   \mathbb{E}_{z'|z} \Big[ f(\mathbf{y}',\mathbf{y},\mathbf{x}',\mathbf{x}, \omega') \Big] = 0
+\end{equation}
+
+where $f$ is given by in the case we choose to represent the distribution by histogram (\textbf{Distribution I})
+\begin{empheq}[left=\empheqlbrace]{gather*}
+   %% transition
+   \Phi' ( a_{j'}, \epsilon' ) - \sum_{ \epsilon \in E } \pi( \epsilon, \epsilon' )
+   \sum_{ a_j \in \mathcal{A} }
+   \Big( \omega_{j,\epsilon, j'} \Phi(a_j, \epsilon) \Big) \quad a_{j'}\in \mathcal{A}, \epsilon \in E
+   \\ \ \\
+   %% Exogenous
+   z'  - \rho_z z - \sigma_{z} \omega_z' \\ \ \\
+   % ( \tau^k )'  - \rho_k \tau^k - \sigma_{k} \omega_k' \\ \ \\
+   %
+   %% Consistency
+   K' \ - \sum_{\epsilon \in E}\sum_{ j=1 }^{N_a} a_j \Phi'( a_j, \epsilon ) \\ \ \\
+   %
+   %% Government Budget Constraint
+   % T \bar{L} - \tau^k  K \\ \ \\
+   %
+   %% Prices
+   r - \alpha e^{z} K^{ \alpha-1 } L^{ 1- \alpha } + \delta \\
+   w - ( 1- \alpha ) e^{z} K^{ \alpha } L^{ - \alpha }   \\ \ \\
+   %
+   %% Euler eq
+   \hat{c} \Big( a_{i,\epsilon}, \epsilon; \ \bsy{\theta} \ \Big)^{ - \sigma } = \beta
+   \Bigg\{
+   \big( 1 + r'\big)
+   \sum_{ \epsilon' \in E } \ \pi( \epsilon'| \epsilon ) \ \hat{c} \Big( \hat{a}'( a_{i,\epsilon}, \epsilon; \bsy{\theta}  ),
+   \epsilon' ; \ \bsy{\theta}' \ \Big)^{- \sigma}
+   \Bigg\} \\
+   %
+   \qquad \hat{c} ( a_{i,\epsilon}, \epsilon; \ \bsy{\theta} \ ) + \hat{a}'( a_{i,\epsilon}, \epsilon; \bsy{\theta}  ) =
+   ( 1+r ) a_{i, \epsilon} + w \tau ( \epsilon ) ,
+   \qquad i =1, \ldots, n_s \text{ and } \epsilon \in E \\
+\end{empheq}
+{\color{RubineRed} \textsc{Important}:} It is crucial to have the consistency condition in terms of next period assets.
+Problems with stable/unstable roots otherwise. 
+% subsection finite_dimensional_approximation (end)
+%..........................................................................................................................
+
+%%%%%%% Stationary Equilibrium
+%--------------------------------------------------------------------------------------------------------------------------
+\subsection{Stationary Equilibrium} % (fold)cd
+\label{sub:stationary_equilibrium}
+
+In terms of the notation presented above, a \emph{stationary equilibrium} of the \emph{discrete} model
+are values $\mathbf{x}^*, \mathbf{y}^*$ such that $f(\mathbf{y}^*,\mathbf{y}^*,\mathbf{x}^*,\mathbf{x}^*, 0)=0$.
+Note that this is just a nonlinear system with as many equations ans unknowns - $6 + \big( (N_a+n_s) \times n_{\epsilon}\big)$.
+However, the system is too large to be solved with usual numerical algorithms and we need a more stable scheme to search for the equilibrium.
+
+The following algorithm seems to work in practice. Set up an initial guess for capital $K^0$
+\begin{enumerate}
+
+   %%%
+   \item Back out market-clearing factor prices $r^0 = \alpha K^{ \alpha -1 } L^{1-\alpha} - \delta $ and
+         $ w^0 = (1-\alpha) K^{\alpha} L^{-\alpha}$
+
+         %%%
+   \item Given fixed prices $ \big( r^0, w^0 \big) $, we can solve the dynamic problem of the agent for
+         $\bsy{\theta}^*_0$
+
+         %%%
+   \item Using implied decisions, solve for \emph{invariant distribution}, i.e.
+         \begin{equation*}
+            \Phi^0 ( a_{j'}, \epsilon' ) - \sum_{ \epsilon \in E } \pi( \epsilon, \epsilon' )
+            \sum_{ a_j \in \mathcal{A} }
+            \Big( \omega_{j,\epsilon, j'} \big( \bsy{\theta}_0^{*} \big) \times \Phi^0(a_j, \epsilon) \Big)
+         \end{equation*}
+
+         %%%
+   \item Compute the aggregate supply of capital deduced the invariant distribution
+         \[
+            A^0 = \sum_{\epsilon \in E} \ \sum_{ j=1 }^{N_a} \ a_j \ \Phi^0 ( a_j, \epsilon )
+         \]
+
+         %%%
+   \item Check $ \lvert A^0 - K^0 \rvert < \epsilon $. If not update the guess for capital $ K^1 $.%
+         \footnote{The updating rule may come from a bisection or newton algorithm.}
+\end{enumerate}
+% subsection stationary_equilibrium (end)
+%..........................................................................................................................
+
+
+%%%%%%% Linearization
+%--------------------------------------------------------------------------------------------------------------------------
+\subsection{Linearization using Automatic Differentiation} % (fold)
+\label{sub:linearization_using_automatic_differentiation}
+
+As is stated on \emph{wiki}
+
+\begin{quote}
+   \em
+   Automatic differentiation (AD) is a set of techniques to numerically evaluate the derivative of a function specified by a computer program. AD exploits the fact that every computer program, no matter how complicated, executes a sequence of elementary arithmetic operations (addition, subtraction, multiplication, division, etc.) and elementary functions (exp, log, sin, cos, etc.). By applying the \textbf{chain rule} repeatedly to these operations, derivatives of arbitrary order can be computed automatically, accurately to working precision, and using at most a small constant factor more arithmetic operations than the original program.
+\end{quote}
+
+The key idea of AD in to use basic derivative rules from calculus, such as the chain rule, in a numerical environment.
+The derivatives are then computed together with the evaluation steps and combined with other derivatives using these rules.
+
+As an example, consider the function $f$ defined by $x \rightarrow x \sin x^2$. When evaluating this function at
+$x=3$ you computer will compute the sequence of values on the left of table
+
+\begin{table}[H]
+   \centering
+   \begin{tabu} to 0.8\textwidth { | X[c] | X[c] | } \hline
+      $x = 3$           &  $\dot{x} = 1$                       \\ \hline
+      $w_1 = x^2$       &  $\dot{w}_1 = 2 x \dot{x}$           \\ \hline
+      $w_2 = \sin(w_1)$ &  $\dot{w}_2 = \cos (w_1) \dot{w}_1$  \\ \hline
+      $w_3 = x w_2$     &  $\dot{x}w_2 + x \dot{w}_2$          \\ \hline
+   \end{tabu}
+\end{table}
+
+But for each computation in the left, we can compute the derivatives that aggregate up to the derivative of
+the function at last line. What AD does is make derivative computations to happen automatically
+when evaluating or interpreting the values on the left side.
+
+These ideas are implemented in \textsc{Matlab} using object-oriented programming (OOP) features to define a new class of value-and-derivative objects. Methods are then associated
+to such objects in order to implement standard calculus derivative rules with built-in chain rule.
+In particular, methods overload the definitions of standard operations and functions, such as $*$ and $\sin$,
+to compute and return not only the value of the expression but also its derivative.
+
+To see a simple example, to compute the value and derivative of our function $f$ at 3, we create a
+value-and-derivative object \texttt{x} with attributes $v =3$ (value) and $d=1$ (derivative). When we evaluate
+the expression \texttt{x * sin( x\^{}2 )} both the left and right hand side of the table are executed and the return value
+is also a value-and-derivative object with attributes $v=1.2363$ and $d = −15.9883$.
+
+\textbf{Julia Implementation} \\
+Using AD is made easy on \emph{Julia} environment due to the ForwardDiff package which offers an implementation
+of forward mode automatic differentiation (AD) in Julia. The package is built upon the \texttt{Dual} type
+
+\begin{minted}{julia}
+   type DualNumber{N, T<:Real} <: Real
+   value::T
+   partials::Partials{N,t}
+   end
+\end{minted}
+where \texttt{Partials} is defined
+\begin{minted}{julia}
+   type Partials{N,T}
+   values::NTuple{N,T}
+   end
+\end{minted}
+
+The idea here is to enhance any real number $x$ by an additional term $ x' \epsilon $, where $ x'\in \mathbb{R} $ and $ \epsilon $ is an
+\emph{infinitesimal} with the property that $ \epsilon^2 =0 $.
+All arithmetic operators must then be extended for the augmented algebra.
+This new arithmetic will consist of ordered pairs, elements written $ ( x,x') $,
+with ordinary arithmetics on the first component, and first order differentiation arithmetic on
+the second component.
+
+Defining a new arithmetic to our \texttt{Dual} types is natural in Julia because of its \emph{multiple dispatch} approach.
+We just need to add a new method to deal with \texttt{Dual} numbers on all elementary numerical functions
+that evaluates both the original function and the derivative of the function. For example
+Base.sin should be handled as
+\begin{minted}{julia}
+   Base.sin(d::Dual) = Dual(sin(value(d)), cos(value(d)) * partials(d))
+\end{minted}
+
+ForwardDiff defines the \texttt{Dual} type and does all the overloading so that we don't need to
+worry about it when computing derivatives.
+Since our function $ f$, no matter how complicated, ends up being composed entirely of these elementary functions, then
+the chain rule enables our derivatives to compose as well. Thus we can differentiate $f$
+by passing in a Dual number and looking at the output.
+
+ADD simple example on the jupyter \ldots
+% subsection linearization_using_automatic_differentiation (end)
+%..........................................................................................................................
+
+%%%%%%% Solving Linearized System
+%--------------------------------------------------------------------------------------------------------------------------
+\subsection{Solving Linearized System} % (fold)
+\label{sub:solving_linearized_system}
+
+
+\paragraph{Klein method.}
+Linearizing \eqref{eq:SYSTEM} around the steady-state yields a first-order linear expectational difference equation
+system of the form
+%%%
+\begin{equation}
+   \label{eq:linearized_equil_conditions}
+   f_{ \mathbf{y}' } E_t \Big[ \underbrace{ ( \mathbf{y}_{t+1} -  \bar{\mathbf{y}}) }_{ \tilde{\mathbf{y}}_{t+1} } \Big] 
+   + f_{ \mathbf{y} }   \tilde{\mathbf{y}}_t  
+   + f_{ \mathbf{x}' }  E_t \Big[  \tilde{\mathbf{x}}_{t+1} \Big]
+   + f_{ \mathbf{x} }   \tilde{\mathbf{x}}_{t}
+   = 0
+\end{equation}
+%%%
+which can be set on Klein's form letting $ \Gamma_0 \defeq \big[f_{ \mathbf{x}' } \quad f_{ \mathbf{y}' } \big] $  and
+$ \Gamma_1 \defeq - \big[f_{ \mathbf{x} } \quad  f_{ \mathbf{y} } \big] $ so that
+%%%
+\begin{equation}
+   \label{eq:klein}
+   \Gamma_0
+   E_t \left\{ 
+         \begin{bmatrix}
+            \mathbf{x}_{t+1} \\ \mathbf{y}_{t+1}
+         \end{bmatrix}
+      \right\} = 
+   \Gamma_1
+   \begin{bmatrix}
+      \mathbf{x}_{t} \\ \mathbf{y}_t 
+   \end{bmatrix}
+\end{equation}
+%%%
+
+\paragraph{Sims method.}
+Let $X_t \defeq ( \tilde{\mathbf{x}}; \ \tilde{\mathbf{y}} )$. To put the model into Sims' format, we need to get rid of
+the expectational terms in
+\begin{equation*}
+   \Gamma_0 \mathbb{E}_t \Big[ X_{t+1} \Big] = \Gamma_1 X_t
+\end{equation*}
+where $ \Gamma_0, \Gamma_1$ are defined as before. To do so we substitute $ E_{t} \big\{X_{t+1}\big\} $ by the
+combination of its \emph{ex post} realizations plus the appropriate forecast errors.\footnote{%
+   For each $y_{i,t+1}$, whenever we have $ E_{t} \big\{ y_{i,t+1} \big\}  $  we substitute to $ y_{i,t+1} - \eta_{i,t+1}$, 
+   where $\eta_{i,t+1} $  are \textbf{endogenous} expectational errors determined as part of the solution.
+   Endogenous states are all pre-determined, so $ E_t\{x_{1,t+1}\} = x_{t+1} $, while exogenous states have exogenous
+   forecast error $ \omega_{t+1} $, so we can write $ E_t \{\mathbf{x}_{2,t+1} \} = \mathbf{x}_{2,t+1} - \omega_{t+1}$
+   }
+Once we do that, we get to Sims' canonical form
+\begin{equation}
+   \label{eq:gensys}
+   \Gamma_0 X_{t+1} = \Gamma_1 X_{t} +  \Psi \omega_{t+1} + \Pi \eta_{t+1}
+\end{equation}
+which is on Sims' canonical form and can be solved using Sim's \texttt{gensys} algorithm\footnote{
+I actually use a modified version of the gensys algorithm that treats the existence and uniqueness more carefully. The code accompanies the
+\texttt{Reiter.jl}.\}.
+
+% subsection solving_linearized_system (end)
+%..........................................................................................................................
+
+% SECTION METHOD (END)
+%..........................................................................................................................
+
+
+% ============================================================================================================
+%------------------------------------------------ REFERENCE ------------------------------------------------
+% ============================================================================================================
+\clearpage
+\newpage
+%%%%% MAC
+% \bibliographystyle{/Users/Felipe/Dropbox/TexFolder/plainnat2}
+% \bibliography{/Users/Felipe/Dropbox/TexFolder/2nd_year_paper}
+%%%%% PC
+\bibliographystyle{C:/Users/falves/Dropbox/TexFolder/plainnat2}
+\bibliography{C:/Users/falves/Dropbox/TexFolder/reiter_project}
+
+\end{document}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% End document

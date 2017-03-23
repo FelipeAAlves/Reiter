@@ -1,29 +1,27 @@
 """
-Holds all equilibrium conditions. Used to do the linearization Step
+Holds all equilibrium conditions. Used to do the LINEARIZATION Step
 
 ### INPUT
-- `Y`       : [X', X, ϵ']
+- `Y`       : [y',x', y, x, ϵ']
               Variable X at t, t-1, expectational shocks ans regular shocks
-- `iZVar`   : index
-
 """
-function equil_histogram{T<:Real}(Y::Vector{T}, iZVar::Dict, ss_histogram::StstHistogram, fcoll::FirmColloc, sol::FirmSolution)
+function equil_histogram{T<:Real}(Y::Vector{T}, ss_histogram::StstHistogram, fcoll::FirmColloc, sol::FirmSolution)
 
     @getPar __pars
 
     #== Extract variables ==#
-    x′::Vector{T}   = Y[ iZVar[:x′] ]
-    y′::Vector{T}   = Y[ iZVar[:y′] ]
-    x::Vector{T}    = Y[ iZVar[:x] ]
-    y::Vector{T}    = Y[ iZVar[:y] ]
-    ϵ_shocks::Vector{T}    = Y[ iZVar[:eps]  ]
+    x′::Vector{T}   = Y[ ss_histogram.iZVar[:x′] ]
+    y′::Vector{T}   = Y[ ss_histogram.iZVar[:y′] ]
+    x::Vector{T}    = Y[ ss_histogram.iZVar[:x] ]
+    y::Vector{T}    = Y[ ss_histogram.iZVar[:y] ]
+    ϵ_shocks::Vector{T}    = Y[ ss_histogram.iZVar[:eps]  ]
 
     #== Unpack variables in x,x′,y,y′ ==#
     vHistogram′, z_aggr′, ϵ_i′  = unpack_x(x′, ss_histogram.ixvar)
     vHistogram , z_aggr , ϵ_i   = unpack_x(x, ss_histogram.ixvar)
 
     Y′, N′, ii′, Π′, wage′, Ve′, pᵃ′ = unpack_y(y′, ss_histogram.iyvar)
-    Y, N, ii, Π, wage, Ve, pᵃ        = unpack_y(y, ss_histogram.iyvar)
+    Y, N, ii, Π, wage, Ve, pᵃ    = unpack_y(y, ss_histogram.iyvar)
 
     #===================================================#
     ###   CONSTRUCT eval_v from steady-state values   ###
@@ -191,28 +189,6 @@ function unpack_y{T<:Real}(y::Vector{T}, iyvar::Dict{Symbol,UnitRange{Int64}})
     return Y, N, ii, Π, wage, Ve, pᵃ
 end
 
-"""
-Unpack the vector X (variable value) into its
-components (distribution of wealth, policy rule parameters, aggregate
-variables)
-"""
-function unpack_histogram{T<:Real}(X::Vector{T}, ss::StstHistogram)
-
-    ## AGGREGATE VAR ##
-    Y::T, N::T, ii::T, Π::T, wage::T = X[ss.iXvar[:aggr_end]];
-
-    ## SHOCK ##
-    dZ::T = X[ss.iXvar[:aggr_exo]];
-
-    ## HISTOGRAM ##
-    vHistogram::Vector{T} = x2distr( X[ss.iXvar[:histogram]], ss.vHistogram );
-
-    ## Value fnc ##
-    Ve::Vector{T} = X[ss.iXvar[:value_fnc]];
-
-    return Y, N, ii, Π, wage, dZ, Ve, vHistogram
-end
-
 function x2distr{T<:Real}(xhistogram::Vector{T})
 
     vHistogram = Array(T, length(xhistogram)+1 )
@@ -230,16 +206,4 @@ end
 
 function value(x::Array{Float64})
     identity(x)
-end
-
-function findnzrows(A,eps=0.0)
-  return find(sum(abs(A),2).>eps)
-end
-
-function findnzcols(A,eps=0.0)
-  return find(sum(abs(A),1).>eps)
-end
-
-function nzcols(A,eps=0.0)
-  return sum(sum(abs(A),1).>eps)
 end
