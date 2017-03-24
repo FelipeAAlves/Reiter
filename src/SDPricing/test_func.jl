@@ -120,22 +120,23 @@ x = linspace(0, 10, 200)
 y = sin(x)
 plot(scatter(x=x, y=y, marker_color="blue", line_width=2))
 
-function two_hists()
+function two_distributions()
     trace1 = bar(;x=Δp_x,y=Δp_mass_plot./sum( Δp_mass_plot ),opacity=0.75, name="Price Changes")
     trace2 = bar(;x=p_x, y=pdev_mass_plot,opacity=0.75, name="Price Changes")
     # trace2 = bar(;x=exp(p_hist_nodes[2:3:end-1]),y=pHistogram_plot,opacity=0.75, name="Stationary Distribution")
     # trace2 = bar(;x=exp(p_hist_nodes),y=pHistogram,opacity=0.75, name="Stationary Distribution")
 
     data = [trace1, trace2]
-    layout = Layout(;barmode="overlay",title="Stationary Distributions",xaxis_range=[0.55,1.45], xaxis_title="Deviation")
+    #== Separate ==#
+    layout1 = Layout(;barmode="overlay",title="Stationary Distribution",xaxis_range=[0.55,1.45], xaxis_title="Deviation"); p1 = plot(data[1], layout1)
+    layout2 = Layout(;barmode="overlay",title="Price Changes",xaxis_range=[0.55,1.45], xaxis_title="Deviation"); p2 = plot(data[2], layout2)
+    [p1 p2]
 
-    # trace1 = histogram(x=x0, opacity=0.75)
-    # trace2 = histogram(x=x1, opacity=0.75)
-    # data = [trace1, trace2]
-    # layout = Layout(barmode="overlay")
-    plot(data, layout)
+    #== TOGETHER ==#
+    # layout = Layout(;barmode="overlay",title="Stationary Distribution",xaxis_range=[0.55,1.45], xaxis_title="Deviation");
+    # plot(data, layout1)
 end
-two_hists()
+two_distributions()
 
 
 # **************************************************************************************
@@ -167,34 +168,36 @@ _nVAR = length(res_equil)
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 using ForwardDiff
 
-f(Y) = Reiter.equil_histogram(Y, iZvar, ss_histogram, fcoll, sol)
-∇f = zeros( length(res_equil), length(Zss) );
-@time ForwardDiff.jacobian!(∇f, f, Zss, ForwardDiff.JacobianConfig{5}(Zss));
+f(Y) = Reiter.equil_histogram(Y, ss_histogram, fcoll, sol)
+∇f = zeros( length(res_equil), length(ss_histogram.Zstst) );
+@time ForwardDiff.jacobian!(∇f, f, ss_histogram.Zstst, ForwardDiff.JacobianConfig{5}(ss_histogram.Zstst));
 # @time ∇f = ForwardDiff.jacobian(f, Zss, ForwardDiff.JacobianConfig{5}(Zss))
 
 
-#============================#
-###   Applying Klein algorithm   ###
-#============================#
-∇f_y′   = ∇f[:,  iZvar[:y′] ] ;
-∇f_x′   = ∇f[:,  iZvar[:x′] ] ;
-∇f_y    =  ∇f[ :, iZvar[:y] ]  ;
-∇f_x    =  ∇f[ :, iZvar[:x] ]  ;
-η_shocks    =  -∇f[ ny+1:end, iZvar[:eps] ]; # equations refering to transition of states
+#================================================================#
+###                  Applying Klein algorithm                  ###
+#================================================================#
+∇f_y′   = ∇f[:,  ss_histogram.iZvar[:y′] ] ;
+∇f_x′   = ∇f[:,  ss_histogram.iZvar[:x′] ] ;
+∇f_y    =  ∇f[ :, ss_histogram.iZvar[:y] ]  ;
+∇f_x    =  ∇f[ :, ss_histogram.iZvar[:x] ]  ;
+η_shocks    =  -∇f[ length(ss_histogram.ystst)+1:end, ss_histogram.iZvar[:eps] ]; # equations refering to transition of states
 
-gx, hx = klein(∇f_x′, ∇f_y′, ∇f_x, ∇f_y)
+gx, hx = Reiter.klein(∇f_x′, ∇f_y′, ∇f_x, ∇f_y);
 
+# **************************************************************************************
 # **************************************************************************************
 
 Γ0 = -[ ∇f_x′ ∇f_y′ ];
 Γ1 =  [ ∇f_x ∇f_y ];
 c  = zeros(_nVAR);
-Ψ  = ∇f[ :, iZvar[:eps] ];
+Ψ  = ∇f[ :, ss_histogram.iZvar[:eps] ];
 
-_Pi_    = -∇f_y′; # E_t{ y_{t+1} } = y_t+1 - eta_t+1
-ind_η  = Reiter.findnzcols(_Pi_, 1e-12) # Reiter.findnzcols(_Pi_);
-_nPi = length(ind_η)
-Π = _Pi_[:, ind_η ]
+_Pi_  = - ∇f_y′; # E_t{ y_{t+1} } = y_t+1 - eta_t+1
+ind_η = Reiter.findnzcols(_Pi_, 1e-12) # Reiter.findnzcols(_Pi_);
+_nPi  = length(ind_η)
+Π     = _Pi_[:, ind_η ]
+
 #== effective/contaminated foward looking equations ==#
 # ind_Pi = Reiter.findnzrows(_Pi_)
 # ind_Pi_effec = ind_Pi[1:_nPi]
@@ -205,9 +208,8 @@ _nPi = length(ind_η)
 # _Pi[ind_Pi_effec,:] = speye(_nPi)
 # _Pi[ind_Pi_extra,:] = _Pi_[ind_Pi_extra,ind_η]/Λ
 
-using Gensys
-println("STEP [3]: LINEARIZING the model")
-@time Phi, cons, B, _, _, _, _, eu, _ = gensysdt(Γ0, Γ1, c , Ψ , Π, 1.0 + 1e-10);
+# using Gensys
+@time Phi, cons, B, _, _, _, _, eu, _ = Reiter.gensysdt(Γ0, Γ1, c , Ψ , Π, 1.0 + 1e-10);
 eu
 
 

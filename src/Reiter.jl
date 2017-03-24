@@ -26,15 +26,15 @@ import Base: show
 #
 #
 ##### includes
-# include("tools\\broydn.jl")
-# include("tools\\klein.jl")
-# include("tools\\gensys.jl")
-# include("KrusellSmithJulia\\init_model_params.jl")
-# include("KrusellSmithJulia\\consumerproblem.jl")
-# include("KrusellSmithJulia\\eulerres.jl")
-# include("KrusellSmithJulia\\param_density.jl")
-# include("KrusellSmithJulia\\steadystate.jl")
-# include("KrusellSmithJulia\\equil_histogram.jl")
+# include("tools/broydn.jl")
+# include("tools/klein.jl")
+# include("tools/gensys.jl")
+# include("KrusellSmithJulia/init_model_params.jl")
+# include("KrusellSmithJulia/consumerproblem.jl")
+# include("KrusellSmithJulia/eulerres.jl")
+# include("KrusellSmithJulia/param_density.jl")
+# include("KrusellSmithJulia/steadystate.jl")
+# include("KrusellSmithJulia/equil_histogram.jl")
 
 # **************************************************************************************
 #   SD Pricing
@@ -52,14 +52,14 @@ export
     StrucParameters, SetParameters
 
 #### includes
-include("tools\\broydn.jl")
-include("tools\\klein.jl")
-include("tools\\gensys.jl")
-include("SDPricing\\pars.jl")
-include("SDPricing\\firm_problem.jl")
-include("SDPricing\\solve_col2.jl")
-include("SDPricing\\steadystate.jl")
-include("SDPricing\\equil_histogram.jl")
+include("tools/broydn.jl")
+include("tools/klein.jl")
+include("tools/gensys.jl")
+include("SDPricing/pars.jl")
+include("SDPricing/firm_problem.jl")
+include("SDPricing/solve_col2.jl")
+include("SDPricing/steadystate.jl")
+include("SDPricing/equil_histogram.jl")
 
 const __pars = SetParameters()
 

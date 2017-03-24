@@ -88,7 +88,7 @@ function stst_histogram_resid(w::Float64, Y::Float64, ss_histogram::StstHistogra
     pricing_fnc_resid = pricing_fnc(hist_nodes, sol.pstar, ξstar_distr, vHistogram, p_histogram_end)[1]
 
     #== Labor market ==#
-    labor_mkt_resid   = resid_labor(hist_nodes, ξstar_distr, vHistogram, vHistogram_end, Y)
+    labor_mkt_resid   = resid_labor(hist_nodes, ξstar_distr, vHistogram, vHistogram_end, Y, Nstst)
 
     @printf("   ∫p^(1-ϵ)       : %8.6f\n", pricing_fnc_resid)
     @printf("   N^* - x        : %8.6f\n", labor_mkt_resid)
@@ -153,11 +153,11 @@ Residual on the labor market
     - First  term depends on end_period distribution of prices/technology
     - second term depends on begin_period distribution of prices/technology
 """
-function resid_labor{T<:Real}(hist_nodes::Array{Float64}, ξstar::Vector{T}, vHistogram_begin::Vector{T}, vHistogram_end::Vector{T}, Y::T, z_aggr::T=0.0)
+function resid_labor{T<:Real}(hist_nodes::Array{Float64}, ξstar::Vector{T}, vHistogram_begin::Vector{T}, vHistogram_end::Vector{T}, N::T, Y::T, z_aggr::T=0.0)
     @getPar __pars
 
     p_nodes, z_ind_nodes::Vector{Int64} = hist_nodes[:,1], hist_nodes[:,2]
-    resid::T = Nstst - dot( Y * exp(-ϵ * p_nodes ) ./(exp(z_aggr) * z_vals[z_ind_nodes]) , vHistogram_end) - dot( cond_mean(ξstar) , vHistogram_begin)
+    resid::T = N - dot( Y * exp(-ϵ * p_nodes ) ./(exp(z_aggr) * z_vals[z_ind_nodes]) , vHistogram_end) - dot( cond_mean(ξstar) , vHistogram_begin)
 
     return resid
 end

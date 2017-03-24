@@ -10,11 +10,11 @@ function equil_histogram{T<:Real}(Y::Vector{T}, ss_histogram::StstHistogram, fco
     @getPar __pars
 
     #== Extract variables ==#
-    x′::Vector{T}   = Y[ ss_histogram.iZVar[:x′] ]
-    y′::Vector{T}   = Y[ ss_histogram.iZVar[:y′] ]
-    x::Vector{T}    = Y[ ss_histogram.iZVar[:x] ]
-    y::Vector{T}    = Y[ ss_histogram.iZVar[:y] ]
-    ϵ_shocks::Vector{T}    = Y[ ss_histogram.iZVar[:eps]  ]
+    x′::Vector{T}   = Y[ ss_histogram.iZvar[:x′] ]
+    y′::Vector{T}   = Y[ ss_histogram.iZvar[:y′] ]
+    x::Vector{T}    = Y[ ss_histogram.iZvar[:x] ]
+    y::Vector{T}    = Y[ ss_histogram.iZvar[:y] ]
+    ϵ_shocks::Vector{T}    = Y[ ss_histogram.iZvar[:eps]  ]
 
     #== Unpack variables in x,x′,y,y′ ==#
     vHistogram′, z_aggr′, ϵ_i′  = unpack_x(x′, ss_histogram.ixvar)
@@ -100,6 +100,7 @@ function equil_histogram{T<:Real}(Y::Vector{T}, ss_histogram::StstHistogram, fco
 
     res_household[1] = 1 - β * ( Y′/Y )^(-σ) * (1.0+ii)/Π'
     res_household[2] = N^(1/ϕ) - 1/ss_histogram.χ * Y^(-σ) * wage           # eq # 332 CHECK no η term
+    # res_household[2] = N′^(1/ϕ) - 1/ss_histogram.χ * Y′^(-σ) * wage           # eq # 332 CHECK no η term
 
     # .....................................................................................
 
@@ -109,6 +110,7 @@ function equil_histogram{T<:Real}(Y::Vector{T}, ss_histogram::StstHistogram, fco
 
     #== TAYLOR rule ==#
     res_equil[1] = ii - (1/β-1.0) - phi_taylor*(Π-1) - ϵ_i          # eq # 333 CHECK no η term
+    # res_equil[1] = ii′ - (1/β-1.0) - phi_taylor*(Π′-1) - ϵ_i′          # eq # 333 CHECK no η term
 
     #== LABOR MARKET clearing ==#
     hist_nodes, (p_hist_nodes, z_hist_nodes) = nodes(ss_histogram)
@@ -118,11 +120,10 @@ function equil_histogram{T<:Real}(Y::Vector{T}, ss_histogram::StstHistogram, fco
 
     Π0 = Πadj_transition(p_hist_nodes, Π)
     Π1 = endperiod_transition( p_hist_nodes, pᵃ, ξstar_distr, Π; update_idio=false ) ###  WARN:  NO-adjustment of idio values  ###
-
     vHistogram_begin = Π0 * vHistogram
     vHistogram_end   = Π1 * vHistogram
 
-    res_equil[2]    = resid_labor(hist_nodes, ξstar_distr, vHistogram_begin, vHistogram_end, Y, z_aggr)
+    res_equil[2]    = resid_labor(hist_nodes, ξstar_distr, vHistogram_begin, vHistogram_end, Y, N, z_aggr) ##  NOTE: there was a mistakeeeee, using the Nstst  ##
 
     #== Inflation determination ==#
     p_histogram_end = sum( reshape(vHistogram_end,length(p_hist_nodes), n_z), 2)
