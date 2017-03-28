@@ -1,11 +1,14 @@
 
-This package contains a `Julia` version of the [Reiter's Projection+Perturbation](http://www.ihs.ac.at/publications/eco/es-258.pdf)
-method to solve heterogeneous agents models in presence of aggregate uncertainty. I consider two main applications
+This package contains a `Julia` code to solve heterogeneous agent model with aggregate uncertainty
+based on the Matlab code accompanying [Reiter (2009)](http://www.ihs.ac.at/publications/eco/es-258.pdf)
+“*Solving heterogeneous-agent models by projection and perturbation*”.
+
+Specifically, I have the code for two standard models featuring heterogeneity
 
 * [Krusell-Smith Model](doc/ReiterJEDCinJulia.pdf)
 * [State Dependent Pricing](doc/SDPricing.pdf)
 
-Check the [jupyter notebook](jupyter\KrusellSmithJulia.ipynb) for a demonstration of Krusell-Smith application.
+Check the [jupyter notebook](jupyter/KrusellSmithJulia.ipynb) for a demonstration of Krusell-Smith application.
 For a detailed description of the method and particular applications check the user guides.
 
 <!-- ## **TODO**
