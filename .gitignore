@@ -3,8 +3,7 @@
 !OUTPUT/.gitkeep
 doc_work/
 OUTPUT/*
-
-GrantProposal.*
+*.ipynb_checkpoints
 
 ### Latex
 *.tex

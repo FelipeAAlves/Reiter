@@ -1,29 +1,30 @@
 
 """
-Description of Household Problem
+Holds information of Household Problem
 
-## Fields
-- `β`
-- `γ`
+### Fields
 
-- `nSavingsPar`
-- `a̲`
-- `asset_knots`
+- `β` : discount factor
+- `σ` : risk aversion
 
-- `nAssetsFine`
-- `asset_grid_fine`
+- `a̲`           : borrowing constraint
+- `nSavingsPar` : policy discretization
+- `asset_knots` : policy discretization
 
-- nQuad
-- nMoments
+- `nAssetsFine`     : histogram points
+- `asset_grid_fine` : histogram points
 
-- `z_vals`
-- `Π`
+- `nQuad`   : quadrature info (used in density only)
+- `nMoments`: quadrature info (used in density only)
+
+- `z_vals` : exogenous shocks
+- `Π`      : transition matrix
 """
 type ConsumerProblem
 
     ##  Parameters  ##
     β::Float64
-    γ::Float64
+    σ::Float64
 
     ##  Asset Grid (Policies) ##
     nSavingsPar::Int64
@@ -62,7 +63,7 @@ function ConsumerProblem()
 
     #== Utility Parameters ==#
     β = 0.96
-    γ = 1.0
+    σ = 1.0
 
     KrepSS = ( ( α * (aggEmployment ^ (1 - α)) ) / ( (1 / β) - (1 - δ) ) ) ^ (1 / (1 - α))
 
@@ -153,7 +154,7 @@ function ConsumerProblem()
 
 
     #== Construct ==#
-    ConsumerProblem(β, γ,
+    ConsumerProblem(β, σ,
                     nSavingsPar, a̲, asset_knots,
                     nAssetsFine, asset_grid_fine,
                     nQuad, nMoments, quad_weights, asset_quad_points,
@@ -338,7 +339,7 @@ end
 Utility function
 """
 function utilfn(cp::ConsumerProblem, cons)
-    cp.γ==1 ? log(cons) : cons^(1-cp.γ)
+    cp.σ==1 ? log(cons) : cons^(1-cp.σ)
 end
 
 """
@@ -350,7 +351,7 @@ function dutil(cp::ConsumerProblem, cons)
         throw( throw(ArgumentError("Negative Consumption")) )
     end
 
-    cons .^ (-cp.γ)
+    cons .^ (-cp.σ)
 
 end
 
@@ -363,7 +364,7 @@ function inv_dutil(cp::ConsumerProblem, dutil)
         throw( throw(ArgumentError("Negative marginal utility of cons")) )
     end
 
-    dutil .^ (-1.0/cp.γ)
+    dutil .^ (-1.0/cp.σ)
 
 end
 

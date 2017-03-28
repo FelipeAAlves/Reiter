@@ -3,10 +3,10 @@
 Holds allHolds all equilibrium conditions. Used to do the LINEARIZATION Step
 
 ### INPUT
-    - `Y`  : [x', y', x,y, ϵ']
+- `Y`  : [x', y', x,y, ϵ']
               where x = [vHistogramDev; capital; dx]
                     y = [vSavingsPar]
-    - `ss` : holds some stst information
+- `ss` : holds some stst information
 """
 function equil_histogram{T<:Real}(Y::Vector{T}, ss::StstHistogram, cp::ConsumerProblem)
 
