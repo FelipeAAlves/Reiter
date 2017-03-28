@@ -4,8 +4,11 @@
 doc/Output/*
 doc/Output/.gitkeep
 OUTPUT/*
+
+GrantProposal.*
+
 ### Latex
-!*.tex
+*.tex
 *.aux
 *.bbl
 *.log
