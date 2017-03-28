@@ -16,7 +16,7 @@
 \newcommand{\plus}[1]{{#1}^{+}}
 
 %%%%%%%%%
-\title{User Guide 02 - State-Dependent Pricing \vspace{-1.25em}} % use 5
+\title{\textsc{User Guide 02} \\ State-Dependent Pricing \vspace{-1.25em}} % use 5
 % {
 %         \vspace{-0in}  
 %         \usefont{OT1}{bch}{b}{n}
@@ -38,10 +38,11 @@
 \begin{document}
 \maketitle
 \begin{abstract}
-   These notes presents an step-by-step on Reiter’s Projection+Perturbation approach to solve a menu-cost model with heterogeneous
-   firms model with aggregate uncertainty. The method seemed to be first implemented for these kind of model by \citet{reiterstudent}.
-   The model itself has been well studied in the literature - see \citet{midrigan} and \citet{Vavra} for example - where it
-   is usually solved using \citet{krusell_smith} method.
+   These notes present a second example of Reiter’s Projection+Perturbation approach to solve heterogenous agents models in the
+   presence of aggregate uncertainty. For this application, we choose a \textbf{menu-cost model} in the spirit of \citet{GolosovLucas}.
+   The model itself has been well studied in the literature - see \citet{midrigan} and \citet{Vavra} subsequent contributions - where
+   it is usually solved using \citet{krusell_smith} method. To see an application of the same methods to a similar menu-cost model as
+   the one discussed in these notes, check \citet{reiterstudent}.
 \end{abstract}
 % %**************************************************************************************************************************
 % %%%%%%% INTODUCTION
@@ -77,11 +78,11 @@ There is a representative household with utility function
    E_0 \sum_{t=1}^{\infty} \beta^t \bigg[ \frac{ C_t^{1-\sigma} -1}{ 1-\sigma } - \chi \frac{ N_t^{1+ 1/\varphi} }{ 1+ 1/\varphi } \bigg]   
 \end{equation}
 %%%
-Consumption is a CES aggregate of differentiated goods $c_t(h)$, with elasticity of substitution $ \epsilon $
+Consumption is a CES aggregate of differentiated goods $\{ c_t(h): h \in[ 0,1 ] \}$, with elasticity of substitution $ \epsilon $
 \[
    C_t = \left( \int c_t(h)^{ \frac{\epsilon-1}{\epsilon} }  \right)^{\frac{\epsilon}{ \epsilon -1 }  }
 \] 
-Optimal consumption across the differentiated goods implies
+Optimal allocation across the differentiated goods implies the following demand function
 %%%
 \begin{equation}
    \label{eq:demand_cons}
@@ -95,11 +96,13 @@ where $ P_t $ is the price index defined by
    P_t \equiv \left( \int p_t(h)^{1-\epsilon} \right)^{ \frac{1}{1-\epsilon} } 
 \end{equation}
 %%%
-Hence, households choose $ \big\{ C_t, N_t, B_t\big\} $ subject to household's nominal period budget constraint
+Household's nominal period budget constraint is 
 \[
    \underbrace{\int p_t(h) c_t(h)dh}_{P_t C_t} + R_t^{-1} B_t= w_t N_t + B_{t-1}+T_t
 \]
-where $ T_t $ are the nominal dividend payments from the firms. Optimality requires
+where $ B_{t} $ is the nominal bond holdings purchased at $t$ with nominal return of $ R_t $ between $ t\mapsto t+1 $ and $ T_t $ are the
+nominal dividend payments from the firms. Hence, households choose $ \big\{ C_t, N_t, B_t\big\} $ to maximize \eqref{eq:utility}
+subject to household's nominal period budget constraint. Optimality requires the following conditions
 %%%
 \begin{align}
    % \label{eq:problem}
@@ -117,128 +120,127 @@ where $ T_t $ are the nominal dividend payments from the firms. Optimality requi
 \subsection{Firms} % (fold)
 \label{sub:firms}
 
+% %%%
+% \begin{itemize}[label=\raisebox{0.50ex}{\tiny$\bullet$}]
+%% 
+% \item 
+Each firm $h$ produces output $y_t(h)$ with labor $\ell_t(h)$ as the only input and is subject to an aggregate
+and an idiosyncratic productivity $ Z_t,a_t(h) $
 %%%
-\begin{itemize}[label=\raisebox{0.50ex}{\tiny$\bullet$}]
-   %% 
-   \item Each firm $h$ produces output $y_t(h)$ with labor $\ell_t(h)$ as the only input and is subject to an aggregate
-   and an idiosyncratic productivity $ Z_t,a_t(h) $
-   %%%
-   \begin{equation}
-      \label{eq:model_eq1}
-      y_t(h) = Z_t a_t(h) \ell_t(h)
-   \end{equation}
-   %%%
-
-   %% 
-   \item Firms act as monopolistic competitors and choose their prices to maximize its market value
-   %%%
-   \begin{equation}
-      \label{eq:model_eq}
-      \mathbb{E}_t \sum_{\tau=0}^{\infty} D_{t,t+\tau} \Pi_{t+\tau} (h)
-   \end{equation}
-   %%%
-   where $D_{t,t+\tau}$ is the nominal stochastic discount factor of the household introduced below and $\Pi_{t+\tau}
-   (h) $ are the nominal profits in period $ t $. The firm can change its price only upon payment of fixed cost $ \xi
-   \in \big[ 0, \bar{\xi} \big] $ denoted in units of labor. Specifically, each period a firm draws a cost from the
-   time-invariant distribution $ H $ and decides whether or not to change its price. Given these restrictions, firm's
-   flow profits are given by
-   %%%
-   \begin{equation}
-      \label{eq:model_eq3}
-      \Pi_t(h) = p_t(h) y_t(h) - W_t \ell_t(h) - \xi_t(h) W_t \mathbbm{1} \big\{p_t(h) \ne p_{t-1}(h) \big\}
-   \end{equation}
-   %%%
-   The firm understands that its sales $ y_t(h) $ depend upon the price charged for the good according to \eqref{eq:demand_cons}. 
-
-\end{itemize}
+\begin{equation}
+   \label{eq:model_eq1}
+   y_t(h) = Z_t a_t(h) \ell_t(h)
+\end{equation}
 %%%
+%% 
+% \item 
+Firms act as monopolistic competitors and choose their prices to maximize its market value
+%%%
+\begin{equation}
+   \label{eq:model_eq}
+   \mathbb{E}_t \sum_{\tau=0}^{\infty} D_{t,t+\tau} \Pi_{t+\tau} (h)
+\end{equation}
+%%%
+where $D_{t,t+\tau}$ is the nominal stochastic discount factor of the household introduced below and $\Pi_{t+\tau}
+(h) $ are the nominal profits in period $ t $. The firm can change its price only upon payment of fixed cost $ \xi
+\in \big[ 0, \bar{\xi} \big] $ denoted in units of labor. Specifically, each period a firm draws a cost from the
+time-invariant distribution $ H $ and decides whether or not to change its price. Given these restrictions, firm's
+flow profits are given by
+%%%
+\begin{equation}
+   \label{eq:model_eq3}
+   \Pi_t(h) = p_t(h) y_t(h) - W_t \ell_t(h) - \xi_t(h) W_t \mathbbm{1} \big\{p_t(h) \ne p_{t-1}(h) \big\}
+\end{equation}
+%%%
+The firm understands that its sales $ y_t(h) $ depend upon the price charged for the good according to \eqref{eq:demand_cons}. 
+% \end{itemize}
+% %%%
 
 %%%%%%%%%%
-\paragraph{Recuvisve Formulation} % (fold)
+\paragraph{Recuvisve Formulation.} % (fold)
 \label{par:recuvisve_formulation}
-% paragraph recuvisve_formulation (end)
+%% Value Function   
+We start by expressing everything in real terms, since the nominal price level should be irrelevant for 
+the equilibrium. Define the real profit function in terms of idiosyncratic productivity and relative prices by
+incorporating the demand function \eqref{eq:demand_cons}
 %%%
-\begin{itemize}[label=\raisebox{0.50ex}{\tiny$\bullet$}]
-   %% Value Function   
-   \item We start by expressing everything in real terms, since the nominal price level should be irrelevant for 
-   the equilibrium. Define the real profit function in terms of idiosyncratic productivity and relative prices by
-   incorporating the demand function
-   %%%
-   \begin{equation}
-      \label{eq:profit_function}
-      \Pi^R_t (a, \tilde{p}) = C_t \tilde{p}^{-\epsilon} \left( \tilde{p} - \frac{w_t}{Z_t a}\right)
-   \end{equation}
-   %%%
-   We can write the problem of the firm recursively 
-   \begin{multline}
-      V_t \left( a_t(h), \frac{ p_{t-1}(h) }{ P_t }, \xi_t; \ \cdot \ \right) = 
-      \max_{p} 
-      \Bigg\{
-         \Pi^R_t \left( a_t(h), \frac{ p }{ P_t } \right) 
-         -\mathbbm{1} \big\{ p \ne p_{t-1}(h ) \big\} \xi_t  w_t + \\
-         %%
-         + \mathbb{E}_t \bigg[ D^R_{t,t+1} V_{t+1} \left( a_{t+1}(h), \frac{ p }{ P_{t+1} }, \xi_{t+1}, \cdot \right) \bigg] \Bigg\}
-   \end{multline}
-   % \begin{multline}
-   %    V_t \left( a, \frac{ p_{-1}(h) }{ P }, \xi; \ \cdot \ \right) = 
-   %    \max_{p} 
-   %    \Bigg\{
-   %       \Pi^R \left( a, \frac{ p_{-1} }{ P }, \cdot \right) 
-   %       -\mathbbm{1} \{p \ne p_{-1} \} \xi + \\
-   %       %%
-   %       + \mathbb{E}_t \bigg[ D^R_{t,t+1} V_{t+1} \left( a_{t+1}(h), \frac{ p }{ P_{t+1} }, \xi_{t+1}, \cdot \right) \bigg] \Bigg\}
-   % \end{multline}
-   It is computationally convenient to rewrite the problem in terms of two value functions $ \big\{V^A,V^N \big\} $
-   which denote the value of adjusting and not adjusting. 
-   Moreover, we can get rid of one state variable by defining beginning-of-period expected value of a firm \emph{prior}
-   to its fixed cost draw, but after the determination of idiosyncratic productivity and aggregate state
-   %%%
-   \begin{equation}
-      \label{eq:value_fnc01}
-      v(a, x; \ \bsy{s} \ ) \defeq \int_{\xi} \max \Big\{ V^A(a,x; \ \bsy{s} \ ) - \xi w(\bsy{s}) , \ V^N(a,x ; \ \bsy{s} \ )  \Big\} dH(\xi )
-   \end{equation}
-   %%% 
-   where
-   %%%
-   \begin{align}
-      \label{eq:value_fnc02}
-      V^A(a; \ \bsy{s} \ ) & = \max_{\tilde{p}} 
-         \Bigg\{ 
-            \Pi^R \left( a, \tilde{p}, \bsy{s} \right) + 
-            \mathbb{E} \bigg[ D^R(\bsy{s},\bsy{s}) v\left( a, \frac{ \tilde{p} }{ \uppi(\bsy{s}') } ; \ \bsy{s}' \ \right) \bigg]
-         \Bigg\} \\
+\begin{equation}
+   \label{eq:profit_function}
+   \Pi^R_t (a, \tilde{p}) = C_t \tilde{p}^{-\epsilon} \left( \tilde{p} - \frac{w_t}{Z_t a}\right)
+\end{equation}
+%%%
+We can write the problem recursively as
+\begin{multline}
+   V_t \left( a_t(h), \frac{ p_{t-1}(h) }{ P_t }, \xi_t;  \bsy{s}  \right) = 
+   \max_{p} 
+   \Bigg\{
+      \Pi^R_t \left( a_t(h), \frac{ p }{ P_t } \right) 
+      -\mathbbm{1} \big\{ p \ne p_{t-1}(h ) \big\} \xi_t  w_t + \\
       %%
-      \label{eq:value_fnc03}
-      V^N(a, x; \ \bsy{s} \ ) & = 
-          \Pi^R \left( a, x; \bsy{s} \right) + \mathbb{E}
-          \left[ 
-               D^R(\bsy{s},\bsy{s}) v\left( a', \frac{x}{ \uppi(\bsy{s}') } ; \ \bsy{s}' \  \right)
-          \right]
-   \end{align}
-   %%%
-   It is clear that a firm will choose to change its price only if the net value of doing so is at least as great as the
-   continuation under the relative price $ x $. Therefore, firms will follow a threshold rule. In particular, let 
-   $ \widetilde{\xi} (a,x) $ describe the fixed cost that leaves a type $ (a,x ) $ firm indifferent between
-   adjusting/not adjusting
-   %%%
-   \begin{equation}
-      \label{eq:threshold_policy}
-      V^a\big( a ; \bsy{s} \big) - w(\bsy{s})\widetilde{\xi}(a,x; \bsy{s} ) =  V^n\big( a,x; \bsy{s} \big)
-   \end{equation}
-   %%%
-   Thus, within each group of firms with idiosyncratic state $ (a,x) $, a fraction $ H\big( \widetilde{\xi}(a,x; \bsy{s}
-   ) \big) $ choose to incur on the menu-cost and change their prices. So, the firm value function $v$ in
-   \eqref{eq:value_fnc01} can be expressed as
-   \begin{equation}
-      v(a, x; \ \cdot \ ) = 
-         \int_0^{ \tilde{\xi}(a,x ) } 
-         \Big[ 
-            V^A(a, x ; \ \cdot \ ) - \xi w(\cdot) 
-         \Big]d\xi  
-         + \Big[  1 - H\Big( \tilde{\xi}(a, x ; ) \Big) \Big] V^N(a,x ; \ \cdot \ )
-   \end{equation}
-\end{itemize}
+      + \mathbb{E}_t \bigg[ D^R_{t,t+1} V_{t+1} \left( a_{t+1}(h), \frac{ p }{ P_{t+1} }, \xi_{t+1}, \bsy{s} \right) \bigg] \Bigg\}
+\end{multline}
+where $\bsy{s}$ is the aggregate state vector - see Subsection \ref{sub:equilibrium} for a discussion of what is a sufficient aggregate
+state for this economy.
+% \begin{multline}
+%    V_t \left( a, \frac{ p_{-1}(h) }{ P }, \xi; \ \cdot \ \right) = 
+%    \max_{p} 
+%    \Bigg\{
+%       \Pi^R \left( a, \frac{ p_{-1} }{ P }, \cdot \right) 
+%       -\mathbbm{1} \{p \ne p_{-1} \} \xi + \\
+%       %%
+%       + \mathbb{E}_t \bigg[ D^R_{t,t+1} V_{t+1} \left( a_{t+1}(h), \frac{ p }{ P_{t+1} }, \xi_{t+1}, \cdot \right) \bigg] \Bigg\}
+% \end{multline}
+It is computationally convenient to rewrite the problem in terms of two value functions $ \big\{V^A,V^N \big\} $, which denote
+respectively the value of adjusting and not adjusting. Moreover, we can get rid of $ \xi $ as a state variable by defining beginning-
+of-period expected value of a firm \emph{prior} to its fixed cost draw, but after the determination of idiosyncratic productivity and
+aggregate state
 %%%
+\begin{equation}
+   \label{eq:value_fnc01}
+   v \big(a, x;  \bsy{s}  \big) \defeq \int_{\xi} \max \Big\{ V^A(a,x;  \bsy{s}  ) - \xi w(\bsy{s}) , \ V^N(a,x ;  \bsy{s}  )  \Big\} dH(\xi )
+\end{equation}
+%%% 
+where
+%%%
+\begin{align}
+   \label{eq:value_fnc02}
+   V^A\big(a;  \bsy{s}  \big) & = \max_{\tilde{p}} 
+      \Bigg\{ 
+         \Pi^R \left( a, \tilde{p}, \bsy{s} \right) + 
+         \mathbb{E} \bigg[ D^R(\bsy{s},\bsy{s}) v\left( a, \frac{ \tilde{p} }{ \uppi(\bsy{s}') } ; \ \bsy{s}' \ \right) \bigg]
+      \Bigg\} \\
+   %%
+   \label{eq:value_fnc03}
+   V^N\big(a, x;  \bsy{s}  \big) & = 
+       \Pi^R \left( a, x; \bsy{s} \right) + \mathbb{E}
+       \left[ 
+            D^R(\bsy{s},\bsy{s}) v\left( a', \frac{x}{ \uppi(\bsy{s}') } ; \ \bsy{s}' \  \right)
+       \right]
+\end{align}
+%%%
+It is clear that a firm will choose to change its price only if the net value of doing so is at least as great as the
+continuation under the relative price $ x $. Therefore, firms will follow a \textbf{threshold rule}. In particular, let 
+$ \widetilde{\xi} (a,x) $ describe the fixed cost that leaves a type $ (a,x ) $ firm indifferent between
+adjusting/not adjusting
+%%%
+\begin{equation}
+   \label{eq:threshold_policy}
+   V^a\big( a ; \bsy{s} \big) - w(\bsy{s})\widetilde{\xi}(a,x; \bsy{s} ) =  V^n\big( a,x; \bsy{s} \big)
+\end{equation}
+%%%
+Thus, within each group of firms with idiosyncratic state $ (a,x) $, a fraction $ H\big( \widetilde{\xi}(a,x; \bsy{s} ) \big) $ chooses
+to incur on the menu-cost and change their prices while a fraction $ H\big( \widetilde{\xi}(a,x; \bsy{s} ) \big) $ find it optimal not
+to adjust their prices. Given this observation, the firm's value function $v$ in \eqref{eq:value_fnc01} can be expressed as
+\begin{equation}
+   v(a, x; \ \cdot \ ) = 
+      \int_0^{ \tilde{\xi}(a,x ) } 
+      \Big[ 
+         V^A(a, x ; \ \cdot \ ) - \xi w(\cdot) 
+      \Big]d\xi  
+      + \Big[  1 - H\Big( \tilde{\xi}(a, x ; ) \Big) \Big] V^N(a,x ; \ \cdot \ )
+\end{equation}
+
+% paragraph recuvisve_formulation (end)
 
 % Subsection firms (end)
 %..........................................................................................................................
@@ -249,7 +251,7 @@ where $ T_t $ are the nominal dividend payments from the firms. Optimality requi
 \subsection{Monetary Policy} % (fold)
 \label{sub:monetary_policy}
 
-The monetary po;licy follows a Taylor interest rate rule
+The monetary policy follows a Taylor interest rate rule
 %%%
 \begin{equation}
    \label{eq:Taylor_rule}
@@ -311,28 +313,29 @@ the decision of firms to adjust or not their prices facing a inflation $ \uppi(\
 
 %%%%%%%%%%
 \paragraph{\normalfont\bf Aggregate state.} 
-In the recursive competitive equilibrium, the aggregate state $ \bsy{s} $ contains the realization of aggregate shocks $ \uppsi =
-\big\{ Z, \epsilon \big\} $ and the distribution of last period production relative prices $ \widetilde{\Psi}_{-1} $. To see why the
-state is appropriate, imagine there exists a map from it to inflation $ \uppi(\bsy{s} ) $. Given this map, we can compute beginning of
-period - prior to adjustment decision - relative prices $\Psi$. Policy functions of the firm, which also depend on maps $ C(\bsy{s} ),
-w(\bsy{s} )$ that come from household optimization and market clearing, imply then a mapping $ \Psi \rightarrow \widetilde{\Psi} $.
-Note that \eqref{eq:price_index} constrains the distribution $ \widetilde{\Psi} $, which is what helps to pin down inflation $\uppi(
+In the recursive competitive equilibrium, what described the aggregate state $ \bsy{s} $ of the economy is the realization of aggregate
+shocks $ \uppsi =\big\{ Z, \epsilon \big\} $ and the distribution of last period production relative prices $ \widetilde{\Psi}_{-1} $.
+To see why this state is sufficient, imagine there exists a map from it to inflation $ \uppi(\bsy{s} ) $. Given this map, we can
+compute beginning of period - prior to adjustment decision - relative prices $\Psi$. Policy functions of the firm, which also depend on
+maps $ C(\bsy{s} ), w(\bsy{s} )$ that come from household optimization and market clearing, imply then a mapping $ \Psi \rightarrow
+\widetilde{\Psi} $. Note that \eqref{eq:price_index} constrains the distribution $ \widetilde{\Psi} $, which is what helps to pin down
+inflation $\uppi(
 \bsy{s})$ we started with\footnote{Check the above box for a tentative explanation regarding this}. It is my hope that the
 implementation will make clearer.
 
 \newpage
 \begin{equil} \small
 A recursive competitive equilibrium is a set of value functions $ \Big\{ v, V^A, V^{N} \Big\} $, policies $ \big\{
-\tilde{p}, \tilde{\xi} \big\} $ for the firm, policies $ \Big\{ C( ), N( ) \Big\} $ for the household, wage $
-w(\cdot) $, interest rate $ R(\cdot) $ and inflation $ \uppi(\cdot) $, and a law of motion $\Gamma$ for the aggregate
+\tilde{p}, \tilde{\xi} \big\} $ for the firm, policies $ \Big\{ C(\bsy{s}), N(\bsy{s}) \Big\} $ for the household, wage $
+w(\bsy{s}) $, interest rate $ R(\bsy{s}) $ and inflation $ \uppi(\bsy{s}) $, and a law of motion $\Gamma$ for the aggregate
 state $ \bsy{s} \mapsto $
 %%%
 \begin{enumerate}
    
    %%
    \item \emph{(Firm optimization)} \\
-   Taking $ \big\{ w(),C(),\uppi() \big\}$ as given the value function solves the Bellman equation in XX and
-   the $ \{ \tilde{p}, \xi \} $ are the associated policies
+   Taking $ \big\{ w(\bsy{s}),C(\bsy{s}),\uppi(\bsy{s}) \big\}$ as given the value function solves the Bellman equation in
+   \eqref{eq:value_fnc01}-\eqref{eq:value_fnc03} and the $ \{ \tilde{p}, \xi \} $ are the associated policies
 
    %% 
    \item \emph{(Household optimization)} \\
@@ -411,8 +414,6 @@ state $ \bsy{s} \mapsto $
 %%%
 \end{equil} \normalsize
 
-I need to argue that this is a sufficient aggregate state variable. Given the $ (\bsy{\omega}, \Psi_{-1} ) $ 
-
 Using the functional form on the demand for labor note we can write the labor market clearing
 %%%
 \begin{equation}
@@ -448,26 +449,30 @@ Check the notes on the Krusell-Smith model.
 %%%%%%%%%%
 \paragraph{Firm's Value Function} % (fold)
 \label{par:firm_s_value_function}
+
 %%%
-\begin{itemize}[label=\raisebox{0.50ex}{\tiny$\bullet$}]
+\begin{itemize}[leftmargin=0in,label=\raisebox{0.50ex}{\tiny$\bullet$}]
    
    %% 
-   \item Value functions are differently approximated in steady state and on the perturbation step. Here we discuss only 
-   the first, which relies on approximating the dependence on idiosyncratic states only\footnote{Check the code for
-   details on the approximation at the perturbation step. In short, we don't perturb the coefficients $ \uptheta^* $ at
-   steady state but instead the steady state value $ v(a_j,x_i; \bsy{\uptheta} ) $ at every node. }
+   \item Value functions are differently approximated in steady state and on the perturbation step. Here we discuss only the first,
+   which relies on approximating the dependence on idiosyncratic states only%
+   \footnote{Check the code for details on the approximation at the perturbation step. In short, we don't perturb the coefficients $
+   \uptheta^* $ at steady state but instead the steady state value $ v(a_j,x_i; \bsy{\uptheta} ) $ at every node. }. Specifically, I
+   approximate the value functions
+   by
    %%%
    \begin{equation}
       \label{eq:approx_value_function}
       v\big( a, x ; \bsy{\uptheta} \big) \approx \sum_{j=1}^{n_a} \sum_{i=1}^{n_x} \uptheta_{j,i} \centerdot \psi_{j,i} (a,x)
    \end{equation}
    %%%
-   where $ n_a, n_x $ denote the order of approximation for each dimension, $ \big\{ \psi_{i,j} \big\} $ the family of
-   splines chosen and $ \uptheta_{j,i} $ are the coefficients on these polynomials.
+   where $ n_a, n_x $ denote the order of approximation for each dimension, $ \big\{ \psi_{i,j} \big\} $ the family of splines chosen
+   and $ \uptheta_{j,i} $ are the coefficients on these polynomials.
 
    %%
-   \item With this particular approximation of the value function, we solve for the steady state coefficients 
-   using collocation which forces the equation to hold exactly on a set of grid points $ \big\{a_j, x_i \big\}_{j=1,n_a \ i =1,n_x} $
+   \item With this particular approximation of the value function, we solve for the steady state coefficients using \emph{collocation}
+   which requires the functional equation for the value function to hold exactly on a set of grid points 
+   $ \big\{a_j, x_i\big\}_{j=1,n_a \ i =1,n_x} $
    %%%
    \begin{align*}
       %%
@@ -488,7 +493,7 @@ Check the notes on the Krusell-Smith model.
          \Bigg\}
    \end{align*}
    %%%
-   where the decision rules must satisfy
+   where the decision rules must also satisfy the following at the grid points
    %%%
    \small \begin{align}
       %%
@@ -596,6 +601,7 @@ how I do the actual implementation of the three different steps.
       N^{1/\varphi}  - \frac{1}{\chi} Y^{-\sigma} w \\ \ \\
       % -----------------------------------------------------------------------------------------------------   
       %% Market Clearing conditions
+      % Labor Market 01
       N - \int 
             \Bigg[ 
                   H\Big( \tilde{\bsy{\xi}}_{j,i} \Big) 
@@ -604,6 +610,9 @@ how I do the actual implementation of the three different steps.
                      \frac{ x^{-\epsilon} Y }{ Za } +
                   \int_0^{ \tilde{\bsy{\xi}}_{j,i} } \xi dH(\xi)
             \Bigg] d\Psi(\uppi) \\
+      N - Y \int \frac{\tilde{p}^{-\epsilon}}{Za} d\tilde{\Psi'}(\uppi) +
+                  \int \Bigg[ \int_0^{ \tilde{\bsy{\xi}}_{j,i} } \xi dH(\xi)
+            \Bigg] d\Psi(\uppi) \\
       % Consistency price 1
       % 1 - \int 
       %       \Bigg[ 
@@ -611,7 +620,7 @@ how I do the actual implementation of the three different steps.
       %             \left( 1- H\Big( \tilde{\bsy{\xi}}_{j,i} \Big) \right) x^{1-\epsilon}
       %       \Bigg] d\Psi(\uppi)\\
       % Consistency price 2
-      1 - \int \tilde{p}^{1-\epsilon} d\widetilde{\Psi'}(\uppi) \\ \ \\
+      1 - \int \tilde{p}^{1-\epsilon} d\tilde{\Psi'}(\uppi) \\ \ \\
       % -----------------------------------------------------------------------------------------------------   
       %%% Dynamics of the Distribution
       \text{Distribution Dynamics}      \\ \ \\
@@ -643,8 +652,9 @@ how I do the actual implementation of the three different steps.
                   % \frac{ \partial \Big( \bsy{V}',v^* \Big) }{ \partial x' } \left( a_{j'}, \frac{\bsy{p}^a_{j}}{ \uppi' } \right) \frac{1}{\uppi'}
                   \frac{ \partial v  }{ \partial x' } \left( a_{j'}, \frac{\bsy{p}^a_{j}}{ \uppi' }; \bsy{\uptheta}' \right) \frac{1}{\uppi'}
    \end{empheq}
-\normalsize
+\normalsize 
 % \end{equation*}
+
 With all these approximations, the recursive equilibrium becomes computable. 
 It resumes to a system of nonlinear equations $ f $ that satisfies
 %%%
@@ -727,8 +737,8 @@ real-wage $w$ and production $ Y^* $
          %%
          % \label{eq:_eq2}
          N^* & = 
-         \int \ell \big( a, \tilde{p} \big) \Psi \big(da,d\tilde{p} \big) + 
-         \int \left( \int^{\tilde{\xi}( a, x) } \zeta dH( \zeta) \right) \widetilde{\Psi} \big( da,dx \big)
+         \int \ell \big( a, \tilde{p} \big) \Psi \big(d[a\times\tilde{p}] \big) + 
+         \int \left( \int^{\tilde{\xi}( a, x) } \zeta dH( \zeta) \right) \widetilde{\Psi} \big( d[a\times x] \big)
       \end{align*}
       %%%
 \end{enumerate}

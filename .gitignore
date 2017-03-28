@@ -1,7 +1,9 @@
 # All OUTPUT files
 !OUTPUT/*
 !OUTPUT/.gitkeep
-
+doc/Output/*
+doc/Output/.gitkeep
+OUTPUT/*
 ### Latex
 !*.tex
 *.aux

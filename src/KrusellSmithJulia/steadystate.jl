@@ -1,11 +1,20 @@
 """
-Computes the residual of asset market using histogram approximation of distribution.
+Computes the residual of asset market for the histogram approximation of distribution.
+```
+    K′ - ∫ a′() dΦ
+```
 The law of motion for histogram is done as in Young (2010);
 
 ### INPUT
+- `cp::ConsumerProblem`
+- `K` : capital guess
+- `ss::StstHistogram`
 
+### RETURNS
+* residual if ss is `Void`
+* update `ss` otherwise
 """
-function stst_histogram_resid(cp::ConsumerProblem, K::Real, ss_histogram::Union{StstHistogram,Void} = Void())
+function stst_histogram_resid(cp::ConsumerProblem, K::Real, ss::Union{StstHistogram,Void} = Void())
 
     nEps, nSavingsPar = cp.nEps, cp.nSavingsPar
 
@@ -16,7 +25,7 @@ function stst_histogram_resid(cp::ConsumerProblem, K::Real, ss_histogram::Union{
     #=======================================================#
     ### Compute Policy function for set of prices         ###
     #=======================================================#
-    @printf("   - Inner loop (Policy) \n")
+    @printf(" Inner loop (Policy) \n")
     f!(Θ, fvec) = eulerres2!(fvec, Θ, Θ, R, R, wage, wage, cp)
     res = nlsolve(f!, cp.Θinit, autodiff = true)
     @printf("   - Policy converged to %.2e \n", res.residual_norm)
@@ -49,25 +58,29 @@ function stst_histogram_resid(cp::ConsumerProblem, K::Real, ss_histogram::Union{
 
     #== Expected Capital ==#
     Ksupply = expect_k(vHistogram, cp)
-    @printf("   K       : %6.4f\n", K)
-    @printf("   Ksupply : %6.4f\n", Ksupply)
-    @printf("   resid   : %6.4f\n", Ksupply-K)
+    @printf("   * K       : %6.4f\n", K)
+    @printf("   * Ksupply : %6.4f\n", Ksupply)
+    @printf("   * resid   : %6.4f\n", Ksupply-K)
     println("---------------------------------------")
 
-    if isa(ss_histogram, Void)
+    if isa(ss, Void)
         return K - Ksupply
     else
-        #== Update ss_histogram variable ==#``
-        copy!(ss_histogram.mΘ, mΘ)
-        copy!(ss_histogram.vHistogram, vHistogram)
-        copy!(ss_histogram.mHistogram, vHistogram)
+        #== Update ss variable ==#``
+        copy!(ss.mΘ, mΘ)
+        copy!(ss.vHistogram, vHistogram)
+        copy!(ss.mHistogram, vHistogram)
 
-        ss_histogram.R     = R
-        ss_histogram.wage  = wage
-        ss_histogram.capital = Ksupply
+        ss.R     = R
+        ss.wage  = wage
+        ss.capital = Ksupply
 
-        copy!(ss_histogram.xstst, [vHistogram[2:end]; Ksupply; 0.0] )     # [xHistogram, K, ϵ]
-        copy!(ss_histogram.ystst, mΘ )                                    # [Θ]
+
+        xstst = [vHistogram[2:end]; Ksupply; 0.0] ;
+        ystst = vec(mΘ);
+        copy!(ss.xstst, xstst)     # [xHistogram, K, ϵ]
+        copy!(ss.ystst, ystst)                                    # [Θ]
+        copy!(ss.Zstst, [xstst; ystst; xstst; ystst; 0.0])
 
         return Void
     end
@@ -82,12 +95,11 @@ Computes residual of asset market using the density as an approximation
 for the distribution.
 
 ### INPUT
-- `cp::ConsumerProblem`
-
-- `K`
-- `mMoments`
-- `init_moments`
-- `ss_density`
+    - `cp::ConsumerProblem`
+    - `K`
+    - `mMoments`
+    - `init_moments`
+    - `ss_density`
 """
 function stst_density_resid(cp::ConsumerProblem, K::Float64, init_moments::Matrix{Float64}, ss_density::Union{Void,StstDensity} = Void())
 
@@ -101,11 +113,10 @@ function stst_density_resid(cp::ConsumerProblem, K::Float64, init_moments::Matri
     #=======================================================#
     ###  Compute Policy function for set of prices        ###
     #=======================================================#
-    @printf("   - Inner loop (Policy) \n")
+    @printf("  Inner loop (Policy) \n")
     f!(Θ, fvec) = eulerres2!(fvec, Θ, Θ, R, R, wage, wage, cp)
-    @printf("      * Solving policy      : ")
-    @time res = nlsolve(f!, cp.Θinit, autodiff = true)
-
+    res = nlsolve(f!, cp.Θinit, autodiff = true)
+    @printf("   - Policy converged to %.2e \n", res.residual_norm)
     #== Save and reshape solution ==#
     copy!(cp.Θinit, res.zero)
     mΘ = reshape(res.zero, nSavingsPar, nEps)
@@ -137,7 +148,7 @@ function stst_density_resid(cp::ConsumerProblem, K::Float64, init_moments::Matri
     mMomentsNext   = similar(init_moments)
     mMomentsCheck  = similar(init_moments)
 
-    options = OptimizationOptions(g_tol = 1e-12, iterations = 100)
+    options = Optim.Options(g_tol = 1e-12, iterations = 100)
 
     iter = 1
     toldensity = 1e-5
@@ -156,8 +167,8 @@ function stst_density_resid(cp::ConsumerProblem, K::Float64, init_moments::Matri
             res = optimize(f, g!, mParamCoeff[:,ieps])
 
             #== Solution ==#
-            ρ_star        = res.minimum;
-            normalization = res.f_minimum;
+            ρ_star        = res.minimizer;
+            normalization = res.minimum;
             mParamCoeff[:,ieps] = ρ_star;
 
             # storage parameters
@@ -225,8 +236,8 @@ function stst_density_resid(cp::ConsumerProblem, K::Float64, init_moments::Matri
         mMoments[:]       = mMomentsNext[:]
 
         if (err<=toldensity) || (max_iterdens==500)
-            @printf("      * Solving distribution:  Iter   Mom t CHECK   distrances\n")
-            @printf("                               %3d     %.3e     %.3e \n", iter, err_moments, err)
+            @printf("   - Solving Invariant density:  Iter   Mom t CHECK   distances\n")
+            @printf("                                 %3d     %.3e     %.3e \n", iter, err_moments, err)
 
         else
 
@@ -243,9 +254,9 @@ function stst_density_resid(cp::ConsumerProblem, K::Float64, init_moments::Matri
 
     #== Expected Capital ==#
     Ksupply = dot(cp.z_dist[:], mMoments'[:,1])
-    @printf("   K       : %6.4f\n", K)
-    @printf("   Ksupply : %6.4f\n", Ksupply)
-    @printf("   resid   : %6.4f\n", Ksupply-K)
+    @printf("   * K       : %6.4f\n", K)
+    @printf("   * Ksupply : %6.4f\n", Ksupply)
+    @printf("   * resid   : %6.4f\n", Ksupply-K)
     println("---------------------------------------")
 
     if isa(ss_density, Void)

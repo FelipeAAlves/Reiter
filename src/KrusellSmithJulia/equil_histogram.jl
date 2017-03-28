@@ -1,55 +1,54 @@
 
 """
-Holds all equilibrium conditions. Used to do the linearization Step
+Holds allHolds all equilibrium conditions. Used to do the LINEARIZATION Step
 
 ### INPUT
-- `Y`       : [X_t, X_{t-1}, η_t, ϵ_{t}]
-              Variable X at t, t-1, expectational shocks ans regular shocks
-              where X = [vHistogramDev; capital; dx; vSavingsPar]
-- `iVarY`   : index
-
+    - `Y`  : [x', y', x,y, ϵ']
+              where x = [vHistogramDev; capital; dx]
+                    y = [vSavingsPar]
+    - `ss` : holds some stst information
 """
-function equil_histogram{T<:Real}(Y::Vector{T}, iZvar::Dict, ss::StstHistogram, cp::ConsumerProblem)
+function equil_histogram{T<:Real}(Y::Vector{T}, ss::StstHistogram, cp::ConsumerProblem)
 
     #== Extract variables ==#
-    x′::Vector{T}   = Y[ iZvar[:x′] ]
-    y′::Vector{T}   = Y[ iZvar[:y′] ]
-    x::Vector{T}    = Y[ iZvar[:x] ]
-    y::Vector{T}    = Y[ iZvar[:y] ]
-    ϵ_shocks::Vector{T}    = Y[ iZvar[:eps]  ]
+    x_p1::Vector{T}   = Y[ ss.iZvar[:x′] ]
+    x::Vector{T}      = Y[ ss.iZvar[:x] ]
+    y_p1::Vector{T}   = Y[ ss.iZvar[:y′] ]
+    y::Vector{T}    = Y[ ss.iZvar[:y] ]
+    ϵ_shocks::Vector{T}    = Y[ ss.iZvar[:eps]  ]
 
     #== Create fnc to unpack ==#
-    vHistogram′, K′, dZ′  = unpack_x(x′,ss.ixvar)
+    vHistogram_p1, K_p1, dZ_p1  = unpack_x(x_p1,ss.ixvar)
     vHistogram , K , dZ   = unpack_x(x ,ss.ixvar)
-    Θ′ = y′;
+    Θ_p1 = y_p1;
     Θ  = y ;
     #== Recover PRICES ==#
     R      = 1 + netintr(K, dZ);
     wage   = wagefunc(K, dZ);
 
-    R′      = 1 + netintr(K′ , dZ′ - σz * ϵ_shocks[1]);
-    wage′   =     wagefunc(K′, dZ′ - σz * ϵ_shocks[1]);
+    R_p1      = 1 + netintr(K_p1 , dZ_p1 - σz * ϵ_shocks[1]);
+    wage_p1   =     wagefunc(K_p1, dZ_p1 - σz * ϵ_shocks[1]);
 
     # ******************************************************************
     #   EQUATIONS
     # ==================================================================
 
     ## Equation Household policy rules  ##
-    resC = eulerres( Θ, Θ′, R, R′, wage, wage′, cp)
+    resC = eulerres( Θ, Θ_p1, R, R_p1, wage, wage_p1, cp)
 
     ## Equation Dynamics of distribution of wealth ##
     Πaggr = forward_mat(cp, Θ)
 
     vHistogram_lom = Πaggr * vHistogram
 
-    resD = distr2x(vHistogram′) - distr2x(vHistogram_lom)
+    resD = distr2x(vHistogram_p1) - distr2x(vHistogram_lom)
 
     ## Equation Exogenoous Shocks ##
-    resZ = dZ′ - ρz * dZ - σz * ϵ_shocks[1]
+    resZ = dZ_p1 - ρz * dZ - σz * ϵ_shocks[1]
 
-    ## Equation Aggregate Capital  - WARN make it end of period capital (otherwise, problem with the state) ##
-    resK = K′ - expect_k(vHistogram′, cp);
-
+    ## Equation Aggregate Capital  ##
+    resK = K_p1 - expect_k(vHistogram_p1, cp);
+    ###  WARN make it end of period capital (otherwise, problem with the state) ###
 
 
     resid = [resC;          # Household policies
@@ -85,6 +84,11 @@ end
 function x2distr{T<:Real}(xhistogram::Vector{T})
 
     vHistogram = Array(T, length(xhistogram)+1 )
+    copy!(vHistogram, [1.0-sum(xhistogram); xhistogram])
+end
+
+function x2distr!{T<:Real}(vHistogram, xhistogram::Vector{T})
+
     copy!(vHistogram, [1.0-sum(xhistogram); xhistogram])
 end
 

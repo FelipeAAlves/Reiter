@@ -29,15 +29,15 @@ type StrucParameters
 end
 
 function SetParameters()
-    β = 0.90
-    ϵ = 5.
+    β = 0.975
+    ϵ = 5.0
     σ = 1.0
-    ϕ = 1.0
+    ϕ = 0.5
     phi_taylor = 1.25
 
     #== Stochastic productivity ==#
     n_z = 10
-    mc  = rouwenhorst(n_z, 0.9, 0.05)
+    mc  = rouwenhorst(n_z, 0.9, 0.03)
     ##  WARN:  nodes are the exponencial     ##
     z_vals = exp(collect(mc.state_values))
     Π_z    = mc.p
@@ -46,16 +46,16 @@ function SetParameters()
     ind_z_x_z = gridmake(raw_ind...)
 
     #== Aggregate shock ==#
-    σ_ii = 0.0025
     ρ_z = 0.96
-    σ_z = 0.01
+    σ_z = 0.005
+    σ_ii = 0.0025
 
-    ξbar = 0.10 #2.5
-    ξ0   = 0.09
-    H(ξ) = 1.0/( ξbar - ξ0 )*(ξ - ξ0)
-    cond_mean(ξ) = 1/(2*(ξbar-ξ0)) * (ξ.^2 - ξ0^2)
+    ξbar = 0.08 #0.05
+    ξ0   = 0.04
+    H(ξ) = (1.0/( ξbar - ξ0 )) .* (ξ - ξ0)
+    cond_mean(ξ) = ( 1/(2*(ξbar-ξ0)) ) .* (ξ.^2 - ξ0^2)
 
-    StrucParameters(β, ϵ, σ, ϕ, phi_taylor, 1.0/3, n_z, Π_z, z_vals, ind_z_x_z, σ_ii, ρ_z, σ_z, ξ0, ξbar, H, cond_mean)
+    StrucParameters(β, ϵ, σ, ϕ, phi_taylor, 0.33, n_z, Π_z, z_vals, ind_z_x_z, σ_ii, ρ_z, σ_z, ξ0, ξbar, H, cond_mean)
 end
 
 macro getPar(P)

@@ -157,8 +157,8 @@ function gensysdt(F::Base.LinAlg.GeneralizedSchur, c, Ψ, Π, div, )
             iunique || info("Indeterminacy. $(nloose) loose endogeneous errors")
         end
 
-        # eu[1] = length(bigev) <= neta                              # falves : from Miao textbook
-        # maxabs( (eye(nunstab) - q2xΠ*((q2xΠ'*q2xΠ)\q2xΠ'))*q2xΨ )  # falves : residuals of regressing are zero
+        # eu[1] = length(bigev) <= neta                               # falves : from Miao textbook
+        # maxabs( (eye(nunstab) - q2xΠ*((q2xΠ'*q2xΠ)\q2xΠ'))*q2xΨ ) # falves : residuals of regressing are zero
         # eu[1] = Int( rank(q2xΠ) == rank(hcat(q2xΨ,q2xΠ)) )         # falves : from checkeu Reiter
 
         ###  NOTE:  column rank = row rank  ###

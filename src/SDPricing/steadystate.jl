@@ -8,7 +8,7 @@ The law of motion for histogram is done as in Young (2010);
 - `Y`: output
 
 """
-function stst_histogram_resid(w::Float64, Y::Float64, ss_histogram::StstHistogram, fcoll::FirmColloc, sol::FirmSolution, update_ss::Bool=false)
+function stst_histogram_resid{T<:Real}(w::T, Y::T, ss_histogram::StstHistogram, fcoll::FirmColloc, sol::FirmSolution, update_ss::Bool=false)
 
     @getPar __pars
     hist_nodes, (p_hist_nodes, z_hist_nodes) = nodes(ss_histogram)
@@ -21,13 +21,13 @@ function stst_histogram_resid(w::Float64, Y::Float64, ss_histogram::StstHistogra
     @printf("   - Inner loop (Policy) \n")
 
     #== Solve firm's policy ==#
-    @time solve_firm_policy!(fcoll, sol, w, Y)
+    solve_firm_policy!(fcoll, sol, w, Y)
 
     #== TO compute eval_v̂ ==#
     Φ_z::SparseMatrixCSC{Float64,Int64}   = fcoll.Φ_tensor.vals[2]
     p_basis = fcoll.p_basis
     cv = sol.coeff[:,3]
-    function eval_v̂(x::Vector{Float64}, z_ind::Vector{Int64}, deriv::Int64 = 0)
+    function eval_v̂(x, z_ind::Vector{Int64}, deriv::Int64 = 0)
 
         @assert length(x)==length(z_ind)
         Φ_p̃ = BasisMatrix( p_basis, Direct(), x, deriv).vals[1]
@@ -49,11 +49,11 @@ function stst_histogram_resid(w::Float64, Y::Float64, ss_histogram::StstHistogra
     # vHistogram = eigenv ./ sum(eigenv);
 
     vHistogram   = zeros(size(Π,1));
-    vHistogram[1] = 1.0;
+    vHistogram[end] = 1.0;
     vHistogram_t1= similar(vHistogram);
     i = 1
     err_hist = 1.0
-    while err_hist>1e-10 && i<10000
+    while err_hist>1e-10 && i < 25000
         copy!(vHistogram_t1,Π*vHistogram)
         err_hist = maxabs(vHistogram - vHistogram_t1)
         copy!(vHistogram,vHistogram_t1)
@@ -68,7 +68,8 @@ function stst_histogram_resid(w::Float64, Y::Float64, ss_histogram::StstHistogra
     #== CHECK consistency ==#
     err_invDist = maximum( abs( Π*vHistogram - vHistogram) );
     @printf("   - Invariant distribution Converged to %.2e \n", err_invDist)
-    err_invDist<1e-9 || throw(error("Invariante distribution is incorrect"))
+    err_invDist<1e-9 || info("Invariante distribution is incorrect")
+    # err_invDist<1e-9 || throw(error("Invariante distribution is incorrect"))
 
     # vEndHistogram = Π_in * vHistogram
     # mEndHistogram = reshape(vEndHistogram, length(p_hist_nodes), length(z_hist_nodes))
@@ -85,7 +86,7 @@ function stst_histogram_resid(w::Float64, Y::Float64, ss_histogram::StstHistogra
     n_hist_p = div(length(vHistogram),n_z)
     p_histogram_end = sum(reshape(vHistogram_end, n_hist_p, n_z),2)
     p_histogram_end = squeeze(p_histogram_end,2)
-    pricing_fnc_resid = pricing_fnc(hist_nodes, sol.pstar, ξstar_distr, vHistogram, p_histogram_end)[1]
+    pricing_fnc_resid = pricing_fnc(p_hist_nodes, sol.pstar, ξstar_distr, vHistogram, p_histogram_end)[1]
 
     #== Labor market ==#
     labor_mkt_resid   = resid_labor(hist_nodes, ξstar_distr, vHistogram, vHistogram_end, Y, Nstst)
@@ -105,11 +106,14 @@ function stst_histogram_resid(w::Float64, Y::Float64, ss_histogram::StstHistogra
         z_ind::Vector{Int64} = fcoll.grid_nodes[:,2]
         Ve_bellman = eval_v̂(x,z_ind)
 
-        xstst = [vHistogram[2:end]; 0.0; 0.0]                      # [vHistogram[2:end], Z, ϵ]
-        ystst = [Y;Nstst; 1/β-1.0; 1.0; w; Ve_bellman; sol.pstar]  # [Y_t, N_t, i_t, Π_t, w_t, Ve, pᵃ]
-        ss_histogram.xstst = xstst
-        ss_histogram.ystst = ystst
-        ss_histogram.Zstst = [ystst; xstst; ystst; xstst; 0; 0]
+        #== Fill in the stst values ==#
+        xstst = [vHistogram[2:end]; 0.0; 0.0]                    # [vHistogram[2:end], Z, ϵ]
+        # xstst = [vHistogram[1:end]; 0.0; 0.0]                  # [vHistogram[2:end], Z, ϵ] last element treatment
+
+        ystst = [Y; Nstst; 1/β-1.0; 1.0; w; Ve_bellman; sol.pstar]  # [Y_t, N_t, i_t, Π_t, w_t, Ve, pᵃ]
+        copy!(ss_histogram.xstst, xstst)
+        copy!(ss_histogram.ystst, ystst)
+        copy!(ss_histogram.Zstst, [xstst; ystst; xstst; ystst; 0; 0])
 
         ss_histogram.χ = Y^(-σ)*w/(Nstst^(1/ϕ)); # set the χ
         return Void
@@ -122,16 +126,15 @@ end
 """
     Price fnc definition
 """
-function pricing_fnc{T<:Real}(hist_nodes::Array{Float64}, pᵃ::Vector{T}, ξstar::Vector{T}, vHistogram_begin::Vector{T}, p_histogram_end::Vector{T}, verify::Bool = true)
+function pricing_fnc{T<:Real}(p_hist_nodes::Vector{Float64}, pᵃ::Vector{T}, ξstar::Vector{T}, vHistogram_begin::Vector{T}, p_histogram_end::Vector{T}, verify::Bool = true)
 
     @getPar __pars
-    p_nodes = hist_nodes[:,1]
-    n_hist_p = div(length(p_nodes),n_z)
+    n_hist_p = length(p_hist_nodes)
 
     #== end of period distribution over price ==#
-    pricing_fnc_resid1::T = 1.0 - dot( exp( (1-ϵ)*p_nodes[1:n_hist_p]) , p_histogram_end )
+    pricing_fnc_resid1::T = 1.0 - dot( exp( (1-ϵ)*p_hist_nodes) , p_histogram_end )
     #== beginning of period distribution ==#
-    pricing_fnc_resid2::T = 1.0 - dot( H(ξstar) .* kron(exp( (1-ϵ)*pᵃ), ones(n_hist_p)) +  (1-H(ξstar)).* exp( (1-ϵ)*p_nodes ), vHistogram_begin)
+    pricing_fnc_resid2::T = 1.0 - dot( H(ξstar) .* kron(exp( (1-ϵ)*pᵃ), ones(n_hist_p)) +  (1-H(ξstar)).* exp( (1-ϵ) .* repmat(p_hist_nodes,n_z)), vHistogram_begin)
     if verify
         if abs(pricing_fnc_resid1 - pricing_fnc_resid2)>1e-8
             @printf("Different results in pricing equilibrium condition\n")
@@ -150,14 +153,15 @@ Residual on the labor market
 
     N = labor_demand + cost_of_changing_prices
 
-    - First  term depends on end_period distribution of prices/technology
+    - First  term depends on end_period distribution (production) of prices/technology
     - second term depends on begin_period distribution of prices/technology
 """
-function resid_labor{T<:Real}(hist_nodes::Array{Float64}, ξstar::Vector{T}, vHistogram_begin::Vector{T}, vHistogram_end::Vector{T}, N::T, Y::T, z_aggr::T=0.0)
+function resid_labor{J,T<:Real}(hist_nodes::Array{Float64}, ξstar::Vector{T}, vHistogram_begin::Vector{T}, vHistogram_end::Vector{T}, Y::T, N::J, z_aggr::T=0.0)
     @getPar __pars
 
     p_nodes, z_ind_nodes::Vector{Int64} = hist_nodes[:,1], hist_nodes[:,2]
-    resid::T = N - dot( Y * exp(-ϵ * p_nodes ) ./(exp(z_aggr) * z_vals[z_ind_nodes]) , vHistogram_end) - dot( cond_mean(ξstar) , vHistogram_begin)
+    z_nodes = z_vals[z_ind_nodes]
+    resid::T = N - Y/exp(z_aggr) * dot( exp(-ϵ * p_nodes )./(z_nodes) , vHistogram_end) - dot( cond_mean(ξstar) , vHistogram_begin)
 
     return resid
 end
@@ -171,7 +175,7 @@ IMPORTANT
         * t period idio shocks  a_t
     - evolves one period. That involves 3 adjustments
         * scale of inflation at t           - x = p_{t-1}/P_t
-        * choices from beginning period t   - p̃(p_{t-1}/P_t)
+        * choices from beginning period t   - p̃(x)
         * evol of idio shocks               - a_t --> a_{t+1} (OPTION update_idio)
 
 These steps are separated into tow different functions
@@ -187,7 +191,8 @@ function endperiod_transition{T<:Real}( p_nodes::Array{Float64}, pstar::Vector{T
 end
 """
 Compute the TRANSPOSE of transition matrix IN-the-period from policies
-
+    - choices from beginning of period
+    - evolution of idio 
 """
 function inperiod_transition{T<:Real}(p_nodes::Array{Float64}, pstar::Vector{T}, ξstar::Vector{T} ; update_idio::Bool=true)
 
@@ -222,8 +227,8 @@ function inperiod_transition{T<:Real}(p_nodes::Array{Float64}, pstar::Vector{T},
         ioff   = (iz-1) * n_p
         ind = ioff+1:iz*n_p
 
-        #== p_inac at each relevant node ==#
-        ξ = repmat( H( ξstar[ind] ), 1, 2)
+        #== p_change price at each relevant node ==#
+        prob_adjust = repmat( H( ξstar[ind] ), 1, 2)
 
         #== Inaction case ==#
         # linear_trans!(i_inaction_to, vv_inaction, p_nodes, p_nodes )
@@ -240,12 +245,12 @@ function inperiod_transition{T<:Real}(p_nodes::Array{Float64}, pstar::Vector{T},
                 #== Inaction case ==#
                 append!(Ic, ic1 + ioff)
                 append!(Ir, i_inaction_to + joff)
-                append!(Val, (1.0 - ξ[:,1]) * p_trans_exo )
+                append!(Val, (1.0 - prob_adjust[:,1]) .* p_trans_exo )
 
                 #== Action case ==#
                 append!(Ic, ic2 + ioff)
                 append!(Ir, i_action_to + joff)
-                append!(Val, ( transpose(ξ) .* vv_action) * p_trans_exo )
+                append!(Val, ( transpose(prob_adjust) .* vv_action) .* p_trans_exo )
             end
         end
     end
@@ -254,6 +259,9 @@ function inperiod_transition{T<:Real}(p_nodes::Array{Float64}, pstar::Vector{T},
     return sparse(Ir, Ic, Val, nΠ, nΠ)
 end
 
+"""
+    Inflation adjustment only
+"""
 function Πadj_transition{T<:Real}(p_nodes::Array{Float64}, Π::T)
 
     @getPar __pars

@@ -1,8 +1,8 @@
 
 function klein(∇f_x′, ∇f_y′, ∇f_x, ∇f_y, stake=1.0)
 
-    Γ0 =  [ ∇f_x′ ∇f_y′ ];
-    Γ1 = -[ ∇f_x ∇f_y ];
+    Γ0 =  [  ∇f_x′ ∇f_y′ ];
+    Γ1 = -[  ∇f_x ∇f_y ];
     n_k = size(∇f_x,2);
     F = schurfact(complex(Γ0), complex(Γ1));
     #  Γ0=F[:Q]*F[:S]*F[:Z]' and Γ_1=F[:Q]*F[:T]*F[:Z]'
@@ -18,9 +18,11 @@ function klein(F::Base.LinAlg.GeneralizedSchur, n_k::Int64, stake::Float64)
     @printf("   Number of state variables    : %d \n", n_k)
     @printf("   Number of stable eigenvalues : %d \n", n_stable)
     if n_stable>n_k
-        error("The Equilibrium is Locally Indeterminate")
+        info("The Equilibrium is Locally Indeterminate")
+        return Void,Void
     elseif n_stable<n_k
-        error("No Local Equilibrium Exists")
+        info("No Local Equilibrium Exists")
+        return Void,Void
     else
         FS = ordschur!(F, !movelast)
         S, T, Qt, Z = FS[:S], FS[:T], FS[:Q], FS[:Z]
@@ -37,12 +39,14 @@ function klein(F::Base.LinAlg.GeneralizedSchur, n_k::Int64, stake::Float64)
             @printf("   Invertibility CHECKED\n")
         end
 
-        Z_11i = inv(Z_11);
-        gx = real(Z_21*Z_11i);
-        hx = real(Z_11 * (S_11\T_11) * Z_11i );
+        # Z_11i = inv(Z_11);
+        # gx = real(Z_21*Z_11i);
+        # hx = real(Z_11 * (S_11\T_11) * Z_11i );
+        gx = real(Z_21/Z_11);
+        hx = real(Z_11 * (S_11\T_11) / Z_11 );
 
         return gx, hx
-    end
+        end
 end
 
 function findnzrows(A,eps=0.0)

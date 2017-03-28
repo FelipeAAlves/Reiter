@@ -58,14 +58,14 @@
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-newton_output_file = "C:\\Users\\falves\\Git\\Reiter\\src\\SDPricing\\newton_output.dat"; # []
+newton_output_file = "C:/Users/falves/Git/Reiter/src/SDPricing/newton_output.dat"; # []
 FF = open(newton_output_file,"w")
 
 """
   Solve for the firm's value function and policies
 
 """
-function solve_firm_policy!(fcoll::FirmColloc, sol::FirmSolution, w::Float64, Y::Float64=1.0, method::Int64 = 2)
+function solve_firm_policy!{T<:Real}(fcoll::FirmColloc, sol::FirmSolution, w::T, Y::T=1.0, method::Int64 = 2)
 
     Φ = fcoll.Φ
     Φ_fac = fcoll.Φ_fac
@@ -74,7 +74,7 @@ function solve_firm_policy!(fcoll::FirmColloc, sol::FirmSolution, w::Float64, Y:
 
     tol = 1e-10
     V    = Φ * sol.coeff
-    Vnew = similar(V)
+    Vnew = zeros(T,size(V))
 
     ii = 1
     err = 1.0
@@ -107,7 +107,7 @@ end
     - `fcoll`
     - `sol`
 """
-function bellman_rhs_eval_v!(V::Array{Float64,2}, fcoll::FirmColloc, sol::FirmSolution, w::Float64, Y::Float64, maximize_pol::Bool = true)
+function bellman_rhs_eval_v!{T<:Real}(V::Array{T,2}, fcoll::FirmColloc, sol::FirmSolution, w::T, Y::T, maximize_pol::Bool = true)
 
     @getPar __pars
 
@@ -124,7 +124,7 @@ function bellman_rhs_eval_v!(V::Array{Float64,2}, fcoll::FirmColloc, sol::FirmSo
 
     #== Coefficients for before shock value function ==#
     cv = sol.coeff[:,3]
-    function eval_v̂(p̃::Vector{Float64}, z_ind::Vector{Int64}, deriv::Int64 = 0)
+    function eval_v̂{T<:Real}(p̃::Vector{T}, z_ind::Vector{Int64}, deriv::Int64 = 0)
 
         @assert length(p̃)==length(z_ind)
         Φ_p̃ = BasisMatrix( p_basis, Direct(), p̃, deriv).vals[1]
@@ -263,7 +263,7 @@ end
 
 IMPORTANT: REMEMBER that p̃ stands for log p in the notes
 """
-function foc_price_adjust_eval_v{T<:Real}(p̃::Vector{T}, v̂_fun::Function, w::T, Y::T, Y_pri::T=Y, Π_pri::T=1.0, z_aggr::T=0.0)
+function foc_price_adjust_eval_v{J<:Real,T<:Real}(p̃::Vector{J}, v̂_fun::Function, w::T, Y::T, Y_pri::T=Y, Π_pri=1.0, z_aggr=0.0)
 
     @getPar __pars
     # .....................................................................................
@@ -275,7 +275,7 @@ function foc_price_adjust_eval_v{T<:Real}(p̃::Vector{T}, v̂_fun::Function, w::
     return resid
 end
 
-function soc_price_adjust_eval_v(p̃::Vector{Float64}, v̂::Function, w::Float64, Y::Float64, Y_pri::Float64=Y, Π_pri::Float64=1.0)
+function soc_price_adjust_eval_v{T<:Real}(p̃::Vector{Float64}, v̂::Function, w::T, Y::T, Y_pri::T=Y, Π_pri::Float64=1.0)
 
     @getPar __pars
 

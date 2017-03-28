@@ -193,6 +193,8 @@ type StstHistogram
     ixvar::Dict{Symbol,UnitRange{Int64}}
     iyvar::Dict{Symbol,UnitRange{Int64}}
 
+    Zstst::Vector{Float64}
+    iZvar::Dict{Symbol,UnitRange{Int64}}
 end
 # Observation: Let it be type to facilitate UPDATE in steady-state fnc
 
@@ -215,7 +217,7 @@ function StstHistogram(cp::ConsumerProblem)
     ixvar = Dict{Symbol,UnitRange{Int64}}()
     iyvar = Dict{Symbol,UnitRange{Int64}}()
 
-    ##  CASE:  State variables  ##
+    ##  CASE:  State variables  ## # Φ, K, z
     nx = 0
     ixvar[:histogram] = 1:(nHistogram-1);                      nx = (nHistogram-1)
     ixvar[:aggr_end]  = nx+1:nx+1;
@@ -225,7 +227,25 @@ function StstHistogram(cp::ConsumerProblem)
     iyvar[:household] = 1:length(mΘ);                         ny = length(mΘ)
     # -------------------------------------------------------------------------------------
 
-    StstHistogram(mΘ, vHistogram, mHistogram, 1.0, 0.0, 0.0, Array(Float64,nx), Array(Float64,ny), ixvar, iyvar)
+    #=======================================================#
+    ###          CONSTRUCT iZvar for use in the          ###
+    #=======================================================#
+    iZvar = Dict{Symbol, UnitRange{Int64}}()
+
+    nExog = 1
+
+    #== iZvar ==#
+    iZvar[:x′]    = 1:nx
+    iZvar[:y′]    = nx+1:ny+nx
+
+    iZvar[:y] = (nx+ny) + (iZvar[:y′])
+    iZvar[:x] = (nx+ny) + (iZvar[:x′])
+    nn = 2*(nx+ny)
+    iZvar[:eps] = nn+1:nn+nExog
+
+    StstHistogram(mΘ, vHistogram, mHistogram, 1.0, 0.0, 0.0,
+            Array(Float64,nx), Array(Float64,ny), ixvar, iyvar,
+            Array(Float64,nn+nExog),iZvar)
 end
 
 """

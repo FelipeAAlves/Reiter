@@ -2,26 +2,26 @@
 Holds all equilibrium conditions. Used to do the LINEARIZATION Step
 
 ### INPUT
-- `Y`       : [y',x', y, x, ϵ']
-              Variable X at t, t-1, expectational shocks ans regular shocks
+
+    - `Y` : [x′, y′, x, y, ϵ′] where states x = [vhistogram, z, ϵ] and controls y = [Y, N, ii, Π. wage, Ve, pᵃ]
+
 """
-function equil_histogram{T<:Real}(Y::Vector{T}, ss_histogram::StstHistogram, fcoll::FirmColloc, sol::FirmSolution)
+function equil_histogram{T<:Real}(Y::Vector{T}, ss::StstHistogram, fcoll::FirmColloc, sol::FirmSolution)
 
     @getPar __pars
 
     #== Extract variables ==#
-    x′::Vector{T}   = Y[ ss_histogram.iZvar[:x′] ]
-    y′::Vector{T}   = Y[ ss_histogram.iZvar[:y′] ]
-    x::Vector{T}    = Y[ ss_histogram.iZvar[:x] ]
-    y::Vector{T}    = Y[ ss_histogram.iZvar[:y] ]
-    ϵ_shocks::Vector{T}    = Y[ ss_histogram.iZvar[:eps]  ]
+    x_p1::Vector{T} = Y[ ss.iZvar[:x′] ]
+    x::Vector{T}    = Y[ ss.iZvar[:x] ]
+    y_p1::Vector{T} = Y[ ss.iZvar[:y′] ]
+    y::Vector{T}    = Y[ ss.iZvar[:y] ]
+    ϵ_shocks::Vector{T}    = Y[ ss.iZvar[:eps]  ]
 
-    #== Unpack variables in x,x′,y,y′ ==#
-    vHistogram′, z_aggr′, ϵ_i′  = unpack_x(x′, ss_histogram.ixvar)
-    vHistogram , z_aggr , ϵ_i   = unpack_x(x, ss_histogram.ixvar)
-
-    Y′, N′, ii′, Π′, wage′, Ve′, pᵃ′ = unpack_y(y′, ss_histogram.iyvar)
-    Y, N, ii, Π, wage, Ve, pᵃ    = unpack_y(y, ss_histogram.iyvar)
+    #== Unpack variables in x,x_p1,y,y_p1 ==#
+    vHistogram_p1, z_aggr_p1, ϵ_i_p1  = unpack_x(x_p1, ss.ixvar)
+    vHistogram , z_aggr , ϵ_i         = unpack_x(x, ss.ixvar)
+    Y_p1, N_p1, ii_p1, Π_p1, wage_p1, Ve_p1, pᵃ_p1 = unpack_y(y_p1, ss.iyvar)
+    Y, N, ii, Π, wage, Ve, pᵃ = unpack_y(y, ss.iyvar)
 
     #===================================================#
     ###   CONSTRUCT eval_v from steady-state values   ###
@@ -62,8 +62,8 @@ function equil_histogram{T<:Real}(Y::Vector{T}, ss_histogram::StstHistogram, fco
         ###      :  derivative wrt x is taken using v^ss     ###
         linear_trans!(ito, p_high, p_bellman_nodes, value(x))
 
-        dVe_ip1::Vector{T} = ( Ve′[n_p*(z_ind-1) + ito]   - value( Ve′[n_p*(z_ind-1) + ito]  ) )
-        dVe_i::Vector{T}   = ( Ve′[n_p*(z_ind-1) + ito-1] - value( Ve′[n_p*(z_ind-1) + ito-1] ) )
+        dVe_ip1::Vector{T} = ( Ve_p1[n_p*(z_ind-1) + ito]   - value( Ve_p1[n_p*(z_ind-1) + ito]  ) )
+        dVe_i::Vector{T}   = ( Ve_p1[n_p*(z_ind-1) + ito-1] - value( Ve_p1[n_p*(z_ind-1) + ito-1] ) )
 
         if deriv == 0
             ##  IMPORTANT:  capture the effect dv/dπ on the value fnc    ##
@@ -82,15 +82,15 @@ function equil_histogram{T<:Real}(Y::Vector{T}, ss_histogram::StstHistogram, fco
     end
 
     ##  Equation:  VALUE FUNCTION  ##
-    _, Ve_backward = get_xi_at(p_bellman_nodes, Ve_pri_itp, sol.pstar, wage, Y, Y′, Π′, z_aggr)
+    _, Ve_backward = get_xi_at(p_bellman_nodes, Ve_pri_itp, sol.pstar, wage, Y, Y_p1, Π_p1, z_aggr)
     res_bellman::Vector{T} = Ve - Ve_backward
     ###  NOTE:  ENVELOPE condition holds, so we don't need to keep     ###
     ###         track of derivatives on price                          ###
 
     # .....................................................................................
 
-    ##  Equation:  FOC for value fnc     ##
-    res_foc = foc_price_adjust_eval_v(pᵃ, Ve_pri_itp, wage, Y, Y′, Π′, z_aggr)
+    ##  Equation:  FOC for the price     ##
+    res_foc = foc_price_adjust_eval_v(pᵃ, Ve_pri_itp, wage, Y, Y_p1, Π_p1, z_aggr)
 
     # .....................................................................................
 
@@ -98,9 +98,9 @@ function equil_histogram{T<:Real}(Y::Vector{T}, ss_histogram::StstHistogram, fco
 
     res_household = Array(T,2)
 
-    res_household[1] = 1 - β * ( Y′/Y )^(-σ) * (1.0+ii)/Π'
-    res_household[2] = N^(1/ϕ) - 1/ss_histogram.χ * Y^(-σ) * wage           # eq # 332 CHECK no η term
-    # res_household[2] = N′^(1/ϕ) - 1/ss_histogram.χ * Y′^(-σ) * wage           # eq # 332 CHECK no η term
+    res_household[1] = 1 - β * ( Y_p1/Y )^(-σ) * (1.0+ii)/Π_p1
+    res_household[2] = N^(1/ϕ) - 1/ss.χ * Y^(-σ) * wage           # eq # 332 CHECK no η term
+    # res_household[2] = N_p1^(1/ϕ) - 1/ss.χ * Y_p1^(-σ) * wage           # eq # 332 CHECK no η term
 
     # .....................................................................................
 
@@ -109,12 +109,12 @@ function equil_histogram{T<:Real}(Y::Vector{T}, ss_histogram::StstHistogram, fco
     res_equil = Array(T,3)
 
     #== TAYLOR rule ==#
-    res_equil[1] = ii - (1/β-1.0) - phi_taylor*(Π-1) - ϵ_i          # eq # 333 CHECK no η term
-    # res_equil[1] = ii′ - (1/β-1.0) - phi_taylor*(Π′-1) - ϵ_i′          # eq # 333 CHECK no η term
+    res_equil[1] = ii - (1/β-1.0) - phi_taylor*(log(Π)) - ϵ_i          # eq # 333 CHECK no η term
+    # res_equil[1] = ii_p1 - (1/β-1.0) - phi_taylor*log(Π_p1) - ϵ_i_p1          # eq # 333 CHECK no η term
 
     #== LABOR MARKET clearing ==#
-    hist_nodes, (p_hist_nodes, z_hist_nodes) = nodes(ss_histogram)
-    ξstar_distr, _ = get_xi_at(p_hist_nodes, Ve_pri_itp, sol.pstar, wage, Y, Y′, Π′, z_aggr)
+    hist_nodes, (p_hist_nodes, z_hist_nodes) = nodes(ss)
+    ξstar_distr, _ = get_xi_at(p_hist_nodes, Ve_pri_itp, sol.pstar, wage, Y, Y_p1, Π_p1, z_aggr)
     ###  NOTE:  ENVELOPE condition holds, so we don't need to keep     ###
     ###         track of derivatives on price                          ###
 
@@ -123,33 +123,34 @@ function equil_histogram{T<:Real}(Y::Vector{T}, ss_histogram::StstHistogram, fco
     vHistogram_begin = Π0 * vHistogram
     vHistogram_end   = Π1 * vHistogram
 
-    res_equil[2]    = resid_labor(hist_nodes, ξstar_distr, vHistogram_begin, vHistogram_end, Y, N, z_aggr) ##  NOTE: there was a mistakeeeee, using the Nstst  ##
+    res_equil[2]    = resid_labor(hist_nodes, ξstar_distr, vHistogram_begin, vHistogram_end, Y, N, z_aggr) ##  WARN: having problems: stable eigenev > state variables ##
 
     #== Inflation determination ==#
     p_histogram_end = sum( reshape(vHistogram_end,length(p_hist_nodes), n_z), 2)
     p_histogram_end = squeeze(p_histogram_end,2)
 
-    ###  2 OPTION's here   ###
-    res_equil[3] = pricing_fnc(hist_nodes, pᵃ, ξstar_distr, vHistogram_begin, p_histogram_end, false)
+    # res_equil[3] = 1.0 - dot( exp( (1-ϵ)*p_hist_nodes) , p_histogram_end )
+    res_equil[3] = pricing_fnc(p_hist_nodes, pᵃ, ξstar_distr, vHistogram_begin, p_histogram_end, false) ###  2 OPTION's here   ###
 
     # .....................................................................................
     ##  Equation:  DISTRIBUTION  ##
 
     ## Transition END period real price --> BEGIN period real asset --> END period savings ##
-    ##  vHistogram --> vHistogram_begin --> vHistogram′
+    ##  vHistogram --> vHistogram_begin --> vHistogram_p1
 
     #== time t END-of-period period distribution ==#
     Π_trans = endperiod_transition( p_hist_nodes, pᵃ, ξstar_distr, Π; update_idio=true)
     vHistogram_lom = Π_trans * vHistogram
 
 
-    res_distr::Vector{T} = distr2x(vHistogram′) - distr2x(vHistogram_lom)
+    res_distr::Vector{T} = distr2x(vHistogram_p1) - distr2x(vHistogram_lom)
+    # res_distr::Vector{T} = vHistogram_p1 - vHistogram_lom                      ###  NOTE:  last element treatment     ###
     # .....................................................................................
 
     ###  Equation:  exogenous conditions   ###
     res_exog = Array(T,2)
-    res_exog[1] = z_aggr′ - ρ_z * z_aggr - σ_z * ϵ_shocks[2]
-    res_exog[2] = ϵ_i′    - σ_ii * ϵ_shocks[1]
+    res_exog[1] = z_aggr_p1 - ρ_z * z_aggr - σ_z * ϵ_shocks[2]
+    res_exog[2] = ϵ_i_p1    - σ_ii * ϵ_shocks[1]
 
     # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
     resid = [res_bellman;
@@ -169,6 +170,7 @@ function unpack_x{T<:Real}(x::Vector{T}, ixvar::Dict{Symbol,UnitRange{Int64}})
 
     ## Histogram  ##
     vHistogram = x2distr( x[ixvar[:histogram]] )
+    # vHistogram = x[ixvar[:histogram]]               ###  NOTE:  last element treatment     ###
 
     ## EXOGENOUS Aggregate state  ##
     z_aggr, ϵ_i = x[ ixvar[:exog_aggr] ]

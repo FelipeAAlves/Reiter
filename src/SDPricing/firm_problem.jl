@@ -62,15 +62,23 @@ function FirmColloc{BF<:BasisFamily}(::Type{BF})
     println(β)
 
     #== Collocation Grids ==#
-    n_p = 30
-    w_guess_high = 0.90;
-    w_guess_low  = 0.70;
+    n_p = 30 # _default_ 30
+    w_guess_high = 0.95; # _default_ 0.90
+    w_guess_low  = 0.50; # _default_ -.70 _OK_
     p_low   = w_guess_low / z_vals[end]
-    p_high  = 1.1 * ϵ/(ϵ-1) * (w_guess_high/ z_vals[1])
-    p_grid = collect( linspace(log( p_low ),log( p_high ),n_p) )
+    p_high  = 1.05 * ϵ/(ϵ-1) * (w_guess_high/ z_vals[1])
+
+    #== More points in the middle ==#
+    # p_grid_begin  = collect( linspace( p_low , 0.8   , 5) )
+    # p_grid_end    = collect( linspace( 1.20  , p_high, 5) )
+    # p_grid_middle = collect( linspace( 0.80  , 1.20  , n_p-8) )
+    # p_grid = vcat(p_grid_begin[1:end-1], p_grid_middle, p_grid_end[2:end])
+
+    #== Usual grid ==#
+    p_grid = collect( linspace( p_low , p_high, n_p) )
 
     ##  WARN WARN:  nodes in p̃ are in logs  ##
-    p_basis = Basis(BF(), p_grid, 0, 3) # using cubic spline
+    p_basis = Basis(BF(), log(p_grid), 0, 3) # using cubic spline
     z_basis = Basis(Spline(), z_vals, 0, 1)
     basis   = Basis(p_basis, z_basis)
     # .....................................................................................
@@ -142,8 +150,8 @@ type StstHistogram
     ixvar::Dict{Symbol,UnitRange{Int64}}
     iyvar::Dict{Symbol,UnitRange{Int64}}
 
-    iZvar::Dict{Symbol,UnitRange{Int64}}
     Zstst::Vector{Float64}
+    iZvar::Dict{Symbol,UnitRange{Int64}}
 
     ##  Auxiliary  ##
     χ::Float64
@@ -158,7 +166,7 @@ function StstHistogram(fcoll::FirmColloc)
     n_coll_p = fcoll.n_coll_p
 
     #== Grids ==#
-    p_hist_nodes = linspace( p_nodes[1],p_nodes[end], 3*n_coll_p)
+    p_hist_nodes = linspace( p_nodes[1],p_nodes[end], 4*n_coll_p) # _default_ 3* n_coll, increase if having trouble finding the stst
     z_hist_nodes = 1:length(z_vals)
     hist_nodes = gridmake(p_hist_nodes, z_hist_nodes)
 
@@ -171,13 +179,14 @@ function StstHistogram(fcoll::FirmColloc)
     ixvar = Dict{Symbol,UnitRange{Int64}}()
     iyvar = Dict{Symbol,UnitRange{Int64}}()
 
-    ##  CASE:  State variables  ##
+    ##  CASE:  State variables  ##  [vHistogram[2:end], Z, ϵ]
     nx = 0
     # ixvar[:endo_aggr]  = nn:5;                                 nn += 5;
-    ixvar[:histogram] = nx+1:nx+(nHistogram-1);   nx += (nHistogram-1)  # WARN : histogram - 1
-    ixvar[:exog_aggr] = nx+1:nx+2;                nx += 2;              # [Z_t, ϵ_i]
+    ixvar[:histogram] = nx+1:nx+(nHistogram-1);   nx += (nHistogram-1)  ###  WARN : histogram - 1
+    # ixvar[:histogram] = nx+1:nx+(nHistogram);   nx += (nHistogram)    ###  WARN : last element treatment histogram
+    ixvar[:exog_aggr] = nx+1:nx+2;              nx += 2;                ###  [Z_t, ϵ_i]
 
-    ##  CASE:  controls  ##
+    ##  CASE:  controls  ## [Y_t, N_t, i_t, Π_t, w_t, Ve, pᵃ]
     ny = 0
     iyvar[:aggr]      = ny+1:5;                            ny += 5;   # [Y_t, N_t, i_t, Π_t, w_t]
     iyvar[:value_fnc] = ny+1:ny+(n_coll_p*n_z);            ny += (n_coll_p*n_z)
@@ -186,14 +195,16 @@ function StstHistogram(fcoll::FirmColloc)
 
     ###  Create the Dicitionary for Z  ###
     # **************************************************************************************
+    # Zstst = [ystst; xstst; ystst; xstst; 0; 0]
+    #
     iZvar = Dict{Symbol, UnitRange{Int64}}()
 
     nExog = 2
     # nEta  = length(fcoll.grid_nodes[:,1]) + length(ss_histogram.vHistogram) + n_z
 
     #== iZvar ==#
-    iZvar[:y′]    = 1:ny
-    iZvar[:x′]    = ny+1:ny+nx
+    iZvar[:x′]    = 1:nx
+    iZvar[:y′]    = nx+1:ny+nx
 
     iZvar[:y] = (nx+ny) + (iZvar[:y′])
     iZvar[:x] = (nx+ny) + (iZvar[:x′])
@@ -204,7 +215,7 @@ function StstHistogram(fcoll::FirmColloc)
 
     StstHistogram(p_hist_nodes, z_hist_nodes, hist_nodes, vHistogram, mHistogram,
         Array(Float64,nx), Array(Float64,ny), ixvar, iyvar,
-        iZvar, Array(Float64,2*(nx+ny)+nExog), 0.0)
+        Array(Float64,nn+nExog),iZvar, 0.0)
 end
 
 function BasisMatrices.nodes(ss_histogram::StstHistogram)
